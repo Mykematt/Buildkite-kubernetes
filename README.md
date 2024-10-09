@@ -1,2 +1,1 @@
-# Myke-repo-infra
-Code for Myke
+# This $(var.env) is for infra developers.
