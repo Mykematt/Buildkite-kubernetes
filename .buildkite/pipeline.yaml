@@ -3,10 +3,10 @@ agents:
   os: "macos-14"
 
 steps:
-  - label: ":pipeline: Build"
+  - label: "Build"
     command: "echo 'Hello from Buildkite! Merge queue test. Main branch update.'"
 
-  - label: ":test_tube: Test"
+  - label: "Test"
     command: "echo 'Running main branch tests...' && sleep 1 && echo 'Tests complete.'"
     depends_on: "~"
     env:
@@ -14,7 +14,7 @@ steps:
 
   - wait
 
-  - label: ":rocket: Deploy"
+  - label: "Deploy"
     command: "echo 'Deploying from main branch...' && sleep 1 && echo 'Deploy complete.'"
     depends_on: "~"
     env:
