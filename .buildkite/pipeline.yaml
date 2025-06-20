@@ -1,21 +1,16 @@
 agents:
-  queue: "mac"
-  os: "macos-14"
+  queue: mac
 
 steps:
-  - label: "Build"
-    command: "echo 'Hello from Buildkite! Merge queue test. Main branch update.'"
+  - label: Build
+    command: echo 'Build step.'
 
-  - label: "Test"
-    command: "echo 'Running main branch tests...' && sleep 1 && echo 'Tests complete.'"
+  - label: Test
+    command: echo 'Test step.'
     depends_on: "~"
-    env:
-      TEST_ENV: "merge-queue"
 
   - wait
 
-  - label: "Deploy"
-    command: "echo 'Deploying from main branch...' && sleep 1 && echo 'Deploy complete.'"
+  - label: Deploy
+    command: echo 'Deploy step.'
     depends_on: "~"
-    env:
-      DEPLOY_ENV: "merge-queue"
