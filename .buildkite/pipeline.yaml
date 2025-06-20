@@ -1,5 +1,5 @@
 steps:
   - label: ":pipeline: Build"
-    command: "echo 'Hello from Buildkite!'"
+    command: "echo 'Hello from Buildkite! Pipeline updated.'"
     agents:
       queue: "mac"
