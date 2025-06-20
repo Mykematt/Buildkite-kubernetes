@@ -1,0 +1,5 @@
+steps:
+  - label: ":pipeline: Build"
+    command: "echo 'Hello from Buildkite!'"
+    agents:
+      queue: "mac"
