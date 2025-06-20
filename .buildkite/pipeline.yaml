@@ -4,13 +4,10 @@ agents:
 
 steps:
   - label: ":pipeline: Build"
-    command: "echo 'Hello from Buildkite! Merge queue test. Another update.'"
-
-  - label: ":pipeline: Build"
-    command: "echo 'Step 1: Build started.' && sleep 2 && echo 'Step 1: Build complete.'"
+    command: "echo 'Hello from Buildkite! Merge queue test. Main branch update.'"
 
   - label: ":test_tube: Test"
-    command: "echo 'Step 2: Running tests...' && sleep 2 && echo 'Step 2: Tests passed.'"
+    command: "echo 'Running main branch tests...' && sleep 1 && echo 'Tests complete.'"
     depends_on: "~"
     env:
       TEST_ENV: "merge-queue"
@@ -18,7 +15,7 @@ steps:
   - wait
 
   - label: ":rocket: Deploy"
-    command: "echo 'Step 3: Deploying...' && sleep 2 && echo 'Step 3: Deploy complete.'"
+    command: "echo 'Deploying from main branch...' && sleep 1 && echo 'Deploy complete.'"
     depends_on: "~"
     env:
       DEPLOY_ENV: "merge-queue"
