@@ -3,14 +3,8 @@ agents:
 
 steps:
   - label: Build
-    command: echo 'Build step.'
-
+    command: echo "Build step"
   - label: Test
-    command: echo 'Test step.'
-    depends_on: "~"
-
-  - wait
-
+    command: echo "Test step"
   - label: Deploy
-    command: echo 'Deploy step.'
-    depends_on: "~"
+    command: echo "Deploy step"
