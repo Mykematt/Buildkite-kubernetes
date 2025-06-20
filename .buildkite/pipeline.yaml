@@ -1,6 +1,7 @@
 agents:
   queue: "mac"
-  
+  os: "macos-14"
+
 steps:
   - label: ":pipeline: Build"
     command: "echo 'Hello from Buildkite! Merge queue test. Another update.'"
@@ -11,9 +12,13 @@ steps:
   - label: ":test_tube: Test"
     command: "echo 'Step 2: Running tests...' && sleep 2 && echo 'Step 2: Tests passed.'"
     depends_on: "~"
+    env:
+      TEST_ENV: "merge-queue"
 
   - wait
 
   - label: ":rocket: Deploy"
     command: "echo 'Step 3: Deploying...' && sleep 2 && echo 'Step 3: Deploy complete.'"
     depends_on: "~"
+    env:
+      DEPLOY_ENV: "merge-queue"
