@@ -1,0 +1,10 @@
+steps:
+  - name: "Deploy Nginx to Kubernetes"
+    command: |
+      kubectl apply -f k8s/
+    agents:
+      queue: kubernetes
+    plugins:
+      - docker#v3.1.0:
+          image: "k8s.gcr.io/kubectl:v1.28.0"
+          always-pull: true
