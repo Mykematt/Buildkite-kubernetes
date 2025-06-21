@@ -3,11 +3,7 @@ steps:
     command: |
       kubectl apply -f k8s/
       echo "\nWaiting for deployment to be ready..."
-      kubectl rollout status deployment/nginx-deployment --timeout=300s
-      echo "\nDeployment status:"
-      kubectl get pods -l app=nginx
-      echo "\nService status:"
-      kubectl get service nginx-service
+      kubectl rollout status deployment/nginx-deployment
     agents:
       queue: kubernetes
     plugins:
