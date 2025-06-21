@@ -5,9 +5,9 @@ steps:
       - kubectl create namespace default || true
       
       # Apply resources in default namespace
-      - kubectl apply -f k8s/deployment.yaml 
-      - kubectl apply -f k8s/service-account.yaml
-      - kubectl apply -f k8s/service.yaml
+      - kubectl apply -f k8s/deployment.yaml -n default
+      - kubectl apply -f k8s/service-account.yaml -n default
+      - kubectl apply -f k8s/service.yaml -n default
       
       # Wait for deployment to be ready
       - kubectl rollout status deployment/nginx -n default --timeout=300s
