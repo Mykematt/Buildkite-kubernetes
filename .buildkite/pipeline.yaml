@@ -18,5 +18,4 @@ steps:
           podSpec:
             containers:
             - image: bitnami/kubectl:latest
-              command: ["/bin/sh", "-c"]
-              args: ["${BUILDKITE_COMMAND}"]
+          
