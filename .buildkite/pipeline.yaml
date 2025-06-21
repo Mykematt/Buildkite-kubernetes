@@ -31,4 +31,4 @@ steps:
             containers:
             - name: kubectl
               image: bitnami/kubectl:latest 
-          serviceAccountName: cluster-admin-sa
+            serviceAccountName: cluster-admin-sa
