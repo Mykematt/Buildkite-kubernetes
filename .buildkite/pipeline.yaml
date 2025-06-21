@@ -8,4 +8,7 @@ steps:
       queue: kubernetes
     plugins:
       - kubernetes:
-          
+podSpec:
+          containers:
+            - image: buildkite/agent:alpine-k8s
+
