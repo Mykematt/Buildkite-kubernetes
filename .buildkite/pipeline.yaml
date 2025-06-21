@@ -4,8 +4,11 @@ steps:
       queue: kubernetes
     plugins:
       - kubernetes:
-          podSpec:
-            containers:
-              - image: k8s.gcr.io/kubectl:v1.28.0
-                command: ["kubectl", "apply", "-f", "../k8s/"]
-                args: ["&&", "echo", "'\nWaiting for deployment to be ready...'", "&&", "kubectl", "rollout", "status", "deployment/nginx-deployment"]
+          config:
+            manifests:
+              - ../k8s/deployment.yaml
+              - ../k8s/service-account.yaml
+              - ../k8s/service.yaml
+          wait: true
+          waitTimeout: 300
+          waitInterval: 5
