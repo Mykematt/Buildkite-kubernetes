@@ -2,15 +2,27 @@ steps:
   - label: "Deploy Nginx to Kubernetes"
     commands:
       # Create namespace if it doesn't exist
+      - echo "Creating namespace..."
       - kubectl create namespace default || true
       
       # Apply resources in default namespace
+      - echo "Applying deployment..."
       - kubectl apply -f k8s/deployment.yaml -n default
+      
+      - echo "Applying service account..."
       - kubectl apply -f k8s/service-account.yaml -n default
+      
+      - echo "Applying service..."
       - kubectl apply -f k8s/service.yaml -n default
       
       # Wait for deployment to be ready
+      - echo "Waiting for deployment to be ready..."
       - kubectl rollout status deployment/nginx -n default --timeout=300s
+      
+      # Verify deployment
+      - echo "Verifying deployment..."
+      - kubectl get pods -n default
+      - kubectl get svc -n default
     agents:
       queue: kubernetes
     plugins:
@@ -18,4 +30,14 @@ steps:
           podSpec:
             containers:
             - image: bitnami/kubectl:latest
-          
+              command: ["/bin/sh", "-c"]
+              args: ["${BUILDKITE_COMMAND}"]
+              env:
+                - name: KUBECONFIG
+                  valueFrom:
+                    secretKeyRef:
+                      name: buildkite-kubeconfig
+                      key: kubeconfig
+          serviceAccountName: cluster-admin-sa
+          securityContext:
+            runAsUser: 0
