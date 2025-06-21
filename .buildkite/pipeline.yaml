@@ -3,12 +3,11 @@ steps:
     agents:
       queue: kubernetes
     plugins:
-      - kubernetes:
-          config:
-            manifests:
-              - ../k8s/deployment.yaml
-              - ../k8s/service-account.yaml
-              - ../k8s/service.yaml
+      - kubernetes#v3.1.0:
+          manifests:
+            - ../k8s/deployment.yaml
+            - ../k8s/service-account.yaml
+            - ../k8s/service.yaml
           wait: true
           waitTimeout: 300
           waitInterval: 5
