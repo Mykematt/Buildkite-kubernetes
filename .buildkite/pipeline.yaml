@@ -10,10 +10,6 @@ steps:
       queue: kubernetes
     plugins:
       - kubernetes:
-          manifests:
-            - ../k8s/deployment.yaml
-            - ../k8s/service-account.yaml
-            - ../k8s/service.yaml
-          wait: true
-          waitTimeout: 300
-          waitInterval: 5
+          podSpec:
+            containers:
+            - image: bitnami/kubectl:latest  # Container with kubectl
