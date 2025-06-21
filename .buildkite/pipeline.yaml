@@ -1,9 +1,5 @@
 steps:
   - label: "Deploy Nginx to Kubernetes"
-    command: |
-      kubectl apply -f ../k8s/
-      echo "\nWaiting for deployment to be ready..."
-      kubectl rollout status deployment/nginx-deployment
     agents:
       queue: kubernetes
     plugins:
@@ -11,13 +7,5 @@ steps:
           podSpec:
             containers:
               - image: k8s.gcr.io/kubectl:v1.28.0
-                command: ["/bin/sh", "-c"]
-                args: ["kubectl apply -f ../k8s/ && echo '\nWaiting for deployment to be ready...' && kubectl rollout status deployment/nginx-deployment"]
-                volumeMounts:
-                  - name: k8s-config
-                    mountPath: /root/.kube
-            volumes:
-              - name: k8s-config
-                hostPath:
-                  path: /root/.kube
-                  type: Directory
+                command: "/bin/sh"
+                args: ["-c", "kubectl apply -f ../k8s/ && echo '\nWaiting for deployment to be ready...' && kubectl rollout status deployment/nginx-deployment"]
