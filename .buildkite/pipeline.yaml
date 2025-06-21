@@ -30,15 +30,5 @@ steps:
           podSpec:
             containers:
             - name: kubectl
-              image: bitnami/kubectl:latest
-              command: ["/bin/sh", "-c"]
-              args: ["${BUILDKITE_COMMAND}"]
-              env:
-                - name: KUBECONFIG
-                  valueFrom:
-                    secretKeyRef:
-                      name: buildkite-kubeconfig
-                      key: kubeconfig
-              securityContext:
-                runAsUser: 0
+              image: bitnami/kubectl:latest 
           serviceAccountName: cluster-admin-sa
