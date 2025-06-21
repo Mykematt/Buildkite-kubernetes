@@ -1,9 +1,10 @@
 steps:
   - label: "Deploy Nginx to Kubernetes"
+    command: echo "Deploying Nginx to Kubernetes"
     agents:
       queue: kubernetes
     plugins:
-      - kubernetes#v3.1.0:
+      - kubernetes:
           manifests:
             - ../k8s/deployment.yaml
             - ../k8s/service-account.yaml
