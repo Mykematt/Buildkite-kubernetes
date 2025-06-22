@@ -19,6 +19,9 @@ spec:
         image: nginx:latest
         ports:
         - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /usr/share/nginx/html
         resources:
           requests:
             memory: "64Mi"
@@ -26,3 +29,7 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "500m"
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
