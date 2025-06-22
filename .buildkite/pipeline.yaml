@@ -3,7 +3,6 @@ steps:
     commands:
       - echo "Deploying Nginx to Kubernetes"
       - kubectl apply -f k8s/deployment.yaml
-      - kubectl apply -f k8s/service-account.yaml  
       - kubectl apply -f k8s/service.yaml
       - kubectl rollout status deployment/nginx --timeout=300s
     agents:
