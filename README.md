@@ -1,5 +1,3 @@
-# Myke-repo-infra
-
 This repository contains the infrastructure configuration for deploying Nginx web server on Kubernetes using Buildkite CI/CD pipeline.
 
 ## Features
