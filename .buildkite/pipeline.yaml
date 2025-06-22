@@ -1,34 +1,16 @@
 steps:
   - label: "Deploy Nginx to Kubernetes"
     commands:
-      # Create namespace if it doesn't exist
-      - echo "Creating namespace..."
-      - kubectl create namespace default || true
-      
-      # Apply resources in default namespace
-      - echo "Applying deployment..."
-      - kubectl apply -f k8s/deployment.yaml -n default
-      
-      - echo "Applying service account..."
-      - kubectl apply -f k8s/service-account.yaml -n default
-      
-      - echo "Applying service..."
-      - kubectl apply -f k8s/service.yaml -n default
-      
-      # Wait for deployment to be ready
-      - echo "Waiting for deployment to be ready..."
-      - kubectl rollout status deployment/nginx -n default --timeout=300s
-      
-      # Verify deployment
-      - echo "Verifying deployment..."
-      - kubectl get pods -n default
-      - kubectl get svc -n default
+      - echo "Deploying Nginx to Kubernetes"
+      - kubectl apply -f k8s/deployment.yaml
+      - kubectl apply -f k8s/service-account.yaml  
+      - kubectl apply -f k8s/service.yaml
+      - kubectl rollout status deployment/nginx --timeout=300s
     agents:
       queue: kubernetes
     plugins:
       - kubernetes:
           podSpec:
+            serviceAccountName: deployer-manager  # Use your new SA
             containers:
-            - name: kubectl
-              image: bitnami/kubectl:latest 
-            serviceAccountName: deployment-sa
+            - image: bitnami/kubectl:latest
