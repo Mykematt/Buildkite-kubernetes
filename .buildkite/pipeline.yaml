@@ -1,32 +1,10 @@
 steps:
-  - key: test-checkout-skip-behavior
-    label: ":test_tube: Test Checkout Skip with Plugin"
-    commands:
-      - echo "=== Testing checkout skip behavior ==="
-      - echo "Current working directory:"
-      - pwd
-      - echo "Directory contents (should be empty since checkout is skipped):"
-      - ls -la
-      - echo "But the plugin should still be available and working!"
-    agents:
-      queue: kubernetes
-    retry:
-      manual: true
-      automatic:
-        - limit: 2
-          exit_status: -1
-    plugins:
-      - kubernetes:
-          checkout:
-            skip: true  # This skips source repo checkout
-          podSpec:
-            serviceAccountName: deployer-manager
-            containers:
-            - image: bitnami/kubectl:latest
-
-  - label: "Deploy Nginx to Kubernetes"
+  - label: "Deploy Nginx to Kubernetes (with checkout skip - should fail)"
     commands:
       - echo "Deploying Nginx to Kubernetes"
+      - echo "Current directory contents:"
+      - ls -la
+      - echo "Attempting to apply manifests (should fail):"
       - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/deployment.yaml
       - kubectl apply -f k8s/service.yaml
@@ -35,7 +13,9 @@ steps:
       queue: kubernetes
     plugins:
       - kubernetes:
+          checkout:
+            skip: true  # This will cause the deployment to fail
           podSpec:
-            serviceAccountName: deployer-manager  # Use your new SA
+            serviceAccountName: deployer-manager
             containers:
             - image: bitnami/kubectl:latest
