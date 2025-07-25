@@ -1,6 +1,3 @@
-agents:
-  queue: "mac"
-
 steps:
   - input: "Select stuff"
     fields:
