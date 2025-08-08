@@ -1,0 +1,22 @@
+steps:
+  - label: "✅ Valid step - existing queue"
+    command: "echo 'This step targets an existing queue'"
+    agents:
+      queue: "xcode"
+
+  - label: "❌ Skipped step - non-existent queue"
+    command: "echo 'This step should never run but targets non-existent queue'"
+    skip: "This step is permanently skipped"
+    agents:
+      queue: "nonexistent-queue"
+
+  - label: "❓ Conditional step - non-existent queue"  
+    command: "echo 'This step has if condition but targets non-existent queue'"
+    if: "false"
+    agents:
+      queue: "another-missing-queue"
+
+  - label: "✅ Normal step - existing queue"
+    command: "echo 'This step should work fine'"
+    agents:
+      queue: "xcode"
