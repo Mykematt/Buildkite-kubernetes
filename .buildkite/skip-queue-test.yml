@@ -11,8 +11,10 @@ steps:
       
       # If you have kubectl access from within the pod, you could verify:
       # kubectl describe pod $HOSTNAME
+      
     agents:
       queue: kubernetes  # Adjust to your queue name
+      
     plugins:
       - kubernetes:
           metadata:
