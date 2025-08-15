@@ -1,22 +1,24 @@
+# Test pipeline to verify branch annotations on K8s pods
+# This will add the buildkite.io/branch annotation to the pod
+
 steps:
-  - label: "✅ Valid step - existing queue"
-    command: "echo 'This step targets an existing queue'"
+  - label: "🔍 Test Branch Annotation"
+    command: |
+      echo "Testing branch annotation on Kubernetes pod"
+      echo "Current branch: $BUILDKITE_BRANCH"
+      echo "Build number: $BUILDKITE_BUILD_NUMBER"
+      echo "Pipeline: $BUILDKITE_PIPELINE_SLUG"
+      
+      # If you have kubectl access from within the pod, you could verify:
+      # kubectl describe pod $HOSTNAME
     agents:
-      queue: "xcode"
-
-  - label: "❓ Conditional step - non-existent queue (FIRST TEST)"  
-    command: "echo 'This step has if condition but targets non-existent queue'"
-    if: "false"
-    agents:
-      queue: "another-missing-queue"
-
-  - label: "❌ Skipped step - non-existent queue (SECOND TEST)"
-    command: "echo 'This step should never run but targets non-existent queue'"
-    skip: "This step is permanently skipped"
-    agents:
-      queue: "nonexistent-queue"
-
-  - label: "✅ Normal step - existing queue"
-    command: "echo 'This step should work fine'"
-    agents:
-      queue: "xcode"
+      queue: kubernetes  # Adjust to your queue name
+    plugins:
+      - kubernetes:
+          metadata:
+            annotations:
+              buildkite.io/branch: "${BUILDKITE_BRANCH}"
+              buildkite.io/build-number: "${BUILDKITE_BUILD_NUMBER}"
+              buildkite.io/pipeline: "${BUILDKITE_PIPELINE_SLUG}"
+              # Add any other annotations you want to test
+              otel.trace/enabled: "true"
