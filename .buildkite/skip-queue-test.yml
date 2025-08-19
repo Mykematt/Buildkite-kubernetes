@@ -8,6 +8,7 @@ steps:
       echo "Current branch: $BUILDKITE_BRANCH"
       echo "Build number: $BUILDKITE_BUILD_NUMBER"
       echo "Pipeline: $BUILDKITE_PIPELINE_SLUG"
+      echo "Further testing"
       
       # If you have kubectl access from within the pod, you could verify:
       # kubectl describe pod $HOSTNAME
