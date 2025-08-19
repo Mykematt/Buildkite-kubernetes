@@ -1,0 +1,98 @@
+steps:
+  - label: "🧪 Test Plugin - Missing Parameters"
+    command: "echo 'Testing parameter validation...'"
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          # Missing required parameters - should fail
+          mode: deploy
+
+  - label: "🧪 Test Plugin - Invalid Mode"
+    command: "echo 'Testing invalid mode...'"
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: invalid
+          release: test-release
+          chart: nginx
+
+  - label: "🧪 Test Plugin - Dry Run Deploy"
+    command: "echo 'Testing dry run deployment...'"
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          release: test-release
+          chart: nginx
+          namespace: test
+          dry_run: true
+          timeout: 60s
+
+  - label: "🚀 Test Plugin - Real EKS Deploy (Kubernetes Plugin)"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: alpine/helm:3.12
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          release: buildkite-helm-test
+          chart: nginx
+          namespace: buildkite-helm-test
+          set:
+            - image.tag=1.21-alpine
+            - replicaCount=2
+            - service.type=ClusterIP
+          timeout: 600s
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  - label: "✅ Verify Deployment (Kubernetes Plugin)"
+    agents:
+      queue: kubernetes
+    command: |
+      echo 'Verifying deployment status...'
+      helm list -n buildkite-helm-test
+      helm status buildkite-helm-test -n buildkite-helm-test
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: alpine/helm:3.12
+    depends_on: "test-plugin-real-eks-deploy-kubernetes-plugin"
+
+  - block: "🤔 Test Rollback?"
+    key: "rollback-gate"
+    depends_on: "verify-deployment"
+
+  - label: "🔄 Test Plugin - Real Rollback (Kubernetes Plugin)"
+    agents:
+      queue: kubernetes
+    depends_on: "rollback-gate"
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: alpine/helm:3.12
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: rollback
+          release: buildkite-helm-test
+          namespace: buildkite-helm-test
+
+  - label: "🧹 Cleanup EKS Resources (Kubernetes Plugin)"
+    agents:
+      queue: kubernetes
+    command: |
+      echo 'Cleaning up test resources...'
+      helm uninstall buildkite-helm-test -n buildkite-helm-test || true
+      echo 'Cleanup completed'
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: alpine/helm:3.12
+    depends_on: "test-plugin-real-rollback-kubernetes-plugin"
