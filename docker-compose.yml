@@ -3,11 +3,10 @@ services:
   helm-deployer:
     image: dtzar/helm-kubectl:latest
     volumes:
-      - ./.kube:/root/.kube:ro
       - ./:/workspace
     working_dir: /workspace
     environment:
-      - KUBECONFIG=/root/.kube/config
+      - AWS_DEFAULT_REGION=us-east-1
       - BUILDKITE_BUILD_ID
       - BUILDKITE_JOB_ID
       - BUILDKITE_STEP_ID
