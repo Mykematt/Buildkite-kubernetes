@@ -9,8 +9,8 @@ steps:
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/busybox"
-          release: "native-agent-busybox"
+          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
+          release: "native-agent-nginx"
           namespace: plugin
           set:
             - service.type=ClusterIP
@@ -61,5 +61,5 @@ steps:
               name: helm-kubectl
     command: |
       echo "🧹 Cleaning up test deployment..."
-      helm uninstall native-agent-busybox -n plugin || true
+      helm uninstall native-agent-nginx -n plugin || true
       echo "✅ Cleanup complete!"
