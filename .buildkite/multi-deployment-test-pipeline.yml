@@ -25,7 +25,7 @@ steps:
       
       # Verify deployment
       kubectl get pods -n plugin -l app.kubernetes.io/name=nginx
-      kubectl get svc -n plugin test-elastic-native
+      kubectl get svc -n plugin test-elastic-native-nginx
 
   # Test 2: Docker Plugin + Deployment Plugin
   - label: "🐳 Docker Plugin + Deployment Plugin"
