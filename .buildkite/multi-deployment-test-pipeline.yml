@@ -1,44 +1,30 @@
 steps:
-  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Install Helm
-  - label: "🔧 Install Helm on Elastic CI Stack Agent"
-    key: "install-helm"
+  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Pre-installed tools
+  - label: "🚀 Deploy with Elastic CI Stack (Pre-installed Helm)"
+    key: "elastic-ci-test"
     agents:
       queue: "default"
     command: |
-      # Install Helm to user directory (no sudo required)
-      curl -fsSL -o helm.tar.gz https://get.helm.sh/helm-v3.18.6-linux-amd64.tar.gz
-      tar -zxvf helm.tar.gz
-      mkdir -p ~/bin
-      mv linux-amd64/helm ~/bin/helm
-      export PATH="$HOME/bin:$PATH"
-      
       # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      aws eks update-kubeconfig --region us-east-1 --name ola-test-cluster
       
-      # Verify installation
-      ~/bin/helm version
+      # Verify pre-installed tools are available
+      echo "✅ Verifying pre-installed tools..."
+      helm version
       kubectl version --client
-
-  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Deploy
-  - label: "🚀 Test 1: Elastic CI Stack + Helm Chart"
-    key: "elastic-ci-test"
-    depends_on: "install-helm"
-    agents:
-      queue: "default"  # Uses Elastic CI Stack agents with EKS access
-    env:
-      PATH: "$HOME/bin:$PATH"
-    plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
-          mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
-          release: "elastic-ci-nginx"
-          namespace: plugin
-          set:
-            - service.type=ClusterIP
-          timeout: "100s"
-          wait: true
-          atomic: true
-          create_namespace: true
+      kubectl get nodes
+      
+      # Deploy using pre-installed Helm
+      helm upgrade --install test-elastic-native oci://registry-1.docker.io/bitnamicharts/nginx \
+        --namespace default \
+        --set service.type=ClusterIP \
+        --timeout 100s \
+        --wait \
+        --atomic
+      
+      # Verify deployment
+      kubectl get pods -l app.kubernetes.io/name=nginx
+      kubectl get svc test-elastic-native-nginx
 
   # Test 2: Docker Plugin (Containerized execution with EKS access)
   - label: "🐳 Test 2: Docker Plugin + Helm Chart"
