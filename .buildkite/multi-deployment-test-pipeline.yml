@@ -16,7 +16,7 @@ steps:
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       
       # Verify installation
-      helm version
+      ~/bin/helm version
       kubectl version --client
 
   # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Deploy
