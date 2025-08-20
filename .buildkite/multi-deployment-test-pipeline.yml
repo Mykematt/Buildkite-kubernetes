@@ -2,6 +2,8 @@ steps:
   # Test 1: Kubernetes Plugin (Current Working Method)
   - label: "🚀 Test 1: Kubernetes Plugin + Helm Chart"
     key: "k8s-plugin-test"
+    agents:
+      queue: kubernetes
     plugins:
       - kubernetes:
           podSpec:
@@ -82,6 +84,8 @@ steps:
   - label: "✅ Verify All Deployments"
     key: "verify-all"
     depends_on: "native-agent-test"
+    agents:
+      queue: kubernetes
     plugins:
       - kubernetes:
           podSpec:
@@ -107,6 +111,8 @@ steps:
   - label: "🧹 Cleanup All Test Deployments"
     key: "cleanup-all"
     depends_on: "cleanup-block"
+    agents:
+      queue: kubernetes
     plugins:
       - kubernetes:
           podSpec:
