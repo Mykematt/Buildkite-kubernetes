@@ -16,7 +16,7 @@ steps:
       
       # Deploy using pre-installed Helm
       helm upgrade --install test-elastic-native oci://registry-1.docker.io/bitnamicharts/nginx \
-        --namespace default \
+        --namespace plugin \
         --set service.type=ClusterIP \
         --timeout 100s \
         --wait \
@@ -26,20 +26,28 @@ steps:
       kubectl get pods -l app.kubernetes.io/name=nginx
       kubectl get svc test-elastic-native-nginx
 
-  # Test 2: Docker Plugin (Containerized execution with EKS access)
+  # Test 2: Docker Plugin (Single container execution with EKS access)
   - label: "🐳 Test 2: Docker Plugin + Helm Chart"
     key: "docker-plugin-test"
     depends_on: "elastic-ci-test"
     agents:
       queue: "default"
+    command: |
+      # Install AWS CLI
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+      
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
-      - docker#v5.8.0:
+      - docker#v5.11.0:
           image: "dtzar/helm-kubectl:latest"
           propagate-environment: true
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/apache"
-          release: "docker-plugin-apache"
+          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
+          release: "docker-plugin-nginx"
           namespace: plugin
           set:
             - service.type=ClusterIP
@@ -47,9 +55,6 @@ steps:
           wait: true
           atomic: true
           create_namespace: true
-    command: |
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
 
   # Test 3: Docker Compose Plugin (Multi-container execution with EKS access)
   - label: "🐙 Test 3: Docker Compose Plugin + Helm Chart"
@@ -58,6 +63,11 @@ steps:
     agents:
       queue: "default"
     command: |
+      # Install AWS CLI
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+      
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
