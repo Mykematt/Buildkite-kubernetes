@@ -12,9 +12,10 @@ steps:
             - name: container-0
               image: dtzar/helm-kubectl:latest
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
-          # Missing chart parameter - should fail with validation error
+          # All parameters present - should succeed
           mode: deploy
           release: test-release
+          chart: nginx
 
   - label: "🧪 Test Plugin - Invalid Mode"
     key: "test-invalid-mode"
