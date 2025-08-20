@@ -15,8 +15,10 @@ steps:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
           release: "k8s-plugin-nginx"
-          namespace: default
-          timeout: "600s"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
           wait: true
           atomic: true
           create_namespace: true
@@ -37,8 +39,10 @@ steps:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/apache"
           release: "docker-plugin-apache"
-          namespace: default
-          timeout: "600s"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
           wait: true
           atomic: true
           create_namespace: true
@@ -55,8 +59,10 @@ steps:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
           release: "compose-plugin-nginx"
-          namespace: default
-          timeout: "600s"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
           wait: true
           atomic: true
           create_namespace: true
@@ -74,14 +80,16 @@ steps:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/busybox"
           release: "native-agent-busybox"
-          namespace: default
-          timeout: "600s"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
           wait: true
           atomic: true
           create_namespace: true
 
   # Verification Step
-  - label: "✅ Verify All Deployments"
+  - label: "✅ Verify All Deployiments"
     key: "verify-all"
     depends_on: "native-agent-test"
     agents:
@@ -95,10 +103,10 @@ steps:
               name: helm-kubectl
     command: |
       echo "🔍 Verifying all deployments..."
-      helm list -n default
+      helm list -n plugin
       echo ""
       echo "📊 Deployment Status:"
-      kubectl get deployments -n default
+      kubectl get deployments -n plugin
       echo ""
       echo "🎯 All 4 deployment methods tested successfully!"
 
@@ -122,8 +130,8 @@ steps:
               name: helm-kubectl
     command: |
       echo "🧹 Cleaning up test deployments..."
-      helm uninstall k8s-plugin-nginx -n default || true
-      helm uninstall docker-plugin-apache -n default || true
-      helm uninstall compose-plugin-nginx -n default || true
-      helm uninstall native-agent-busybox -n default || true
+      helm uninstall k8s-plugin-nginx -n plugin || true
+      helm uninstall docker-plugin-apache -n plugin || true
+      helm uninstall compose-plugin-nginx -n plugin || true
+      helm uninstall native-agent-busybox -n plugin || true
       echo "✅ Cleanup complete!"
