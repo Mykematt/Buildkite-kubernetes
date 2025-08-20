@@ -33,17 +33,19 @@ steps:
     agents:
       queue: "default"
     command: |
-      # Install AWS CLI to /tmp (writable location)
-      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      unzip awscliv2.zip
-      ./aws/install --bin-dir /tmp/aws-cli --install-dir /tmp/aws-cli-install
-      export PATH="/tmp/aws-cli:$PATH"
+      # Install kubectl
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      chmod +x kubectl && mv kubectl /usr/local/bin/
+      
+      # Install Helm
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 700 get_helm.sh && ./get_helm.sh
       
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
       - docker#v5.11.0:
-          image: "dtzar/helm-kubectl:latest"
+          image: "amazon/aws-cli:latest"
           propagate-environment: true
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
@@ -64,11 +66,13 @@ steps:
     agents:
       queue: "default"
     command: |
-      # Install AWS CLI to /tmp (writable location)
-      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      unzip awscliv2.zip
-      ./aws/install --bin-dir /tmp/aws-cli --install-dir /tmp/aws-cli-install
-      export PATH="/tmp/aws-cli:$PATH"
+      # Install kubectl
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      chmod +x kubectl && mv kubectl /usr/local/bin/
+      
+      # Install Helm
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 700 get_helm.sh && ./get_helm.sh
       
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test

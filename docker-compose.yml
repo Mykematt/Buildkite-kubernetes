@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   helm-deployer:
-    image: dtzar/helm-kubectl:latest
+    image: amazon/aws-cli:latest
     volumes:
       - ./:/workspace
     working_dir: /workspace
