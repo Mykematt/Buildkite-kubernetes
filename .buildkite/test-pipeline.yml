@@ -25,6 +25,7 @@ steps:
           create_namespace: true
 
   - label: "✅ Verify Deployment (Kubernetes Plugin)"
+    key: "verify-deployment"
     command: |
       echo 'Verifying deployment status...'
       helm list -n default
