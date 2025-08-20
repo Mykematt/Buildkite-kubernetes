@@ -98,7 +98,7 @@ steps:
       echo "📊 Deployment Status:"
       kubectl get deployments -n default
       echo ""
-      echo "🎯 All deployment methods tested successfully!"
+      echo "🎯 All 4 deployment methods tested successfully!"
 
   # Cleanup Block
   - block: "🧹 Clean up test deployments?"
