@@ -1,76 +1,7 @@
 steps:
-  # Test 1: Kubernetes Plugin (Current Working Method)
-  - label: "🚀 Test 1: Kubernetes Plugin + Helm Chart"
-    key: "k8s-plugin-test"
-    agents:
-      queue: kubernetes
-    plugins:
-      - kubernetes:
-          podSpec:
-            serviceAccountName: deployer-manager
-            containers:
-            - image: dtzar/helm-kubectl:latest
-              name: helm-kubectl
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
-          mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
-          release: "k8s-plugin-nginx"
-          namespace: plugin
-          set:
-            - service.type=ClusterIP
-          timeout: "100s"
-          wait: true
-          atomic: true
-          create_namespace: true
-
-  # Test 2: Docker Plugin Approach
-  - label: "🐳 Test 2: Docker Plugin + Helm Chart"
-    key: "docker-plugin-test"
-    depends_on: "k8s-plugin-test"
-    plugins:
-      - docker#v5.8.0:
-          image: "dtzar/helm-kubectl:latest"
-          environment:
-            - KUBECONFIG=/workspace/.kube/config
-          volumes:
-            - "./.kube:/workspace/.kube:ro"
-          propagate-environment: true
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
-          mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/apache"
-          release: "docker-plugin-apache"
-          namespace: plugin
-          set:
-            - service.type=ClusterIP
-          timeout: "100s"
-          wait: true
-          atomic: true
-          create_namespace: true
-
-  # Test 3: Docker Compose Plugin Approach
-  - label: "🐙 Test 3: Docker Compose Plugin + Helm Chart"
-    key: "docker-compose-test"
-    depends_on: "docker-plugin-test"
-    plugins:
-      - docker-compose#v4.16.0:
-          run: helm-deployer
-          propagate-environment: true
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
-          mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
-          release: "compose-plugin-nginx"
-          namespace: plugin
-          set:
-            - service.type=ClusterIP
-          timeout: "100s"
-          wait: true
-          atomic: true
-          create_namespace: true
-
-  # Test 4: Native Agent (Mac local agent with kubectl/helm)
-  - label: "⚡ Test 4: Native Agent + Helm Chart"
+  # Test: Native Agent (Mac local agent with kubectl/helm)
+  - label: "⚡ Native Agent + Helm Chart Test"
     key: "native-agent-test"
-    depends_on: "docker-compose-test"
     agents:
       queue: "mac"  # Uses local Mac agent with kubectl/helm in PATH
     env:
@@ -89,8 +20,8 @@ steps:
           create_namespace: true
 
   # Verification Step
-  - label: "✅ Verify All Deployiments"
-    key: "verify-all"
+  - label: "✅ Verify Native Agent Deployment"
+    key: "verify-deployment"
     depends_on: "native-agent-test"
     agents:
       queue: kubernetes
@@ -102,18 +33,18 @@ steps:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
     command: |
-      echo "🔍 Verifying all deployments..."
+      echo "🔍 Verifying native agent deployment..."
       helm list -n plugin
       echo ""
       echo "📊 Deployment Status:"
       kubectl get deployments -n plugin
       echo ""
-      echo "🎯 All 4 deployment methods tested successfully!"
+      echo "🎯 Native agent deployment test successful!"
 
   # Cleanup Block
   - block: "🧹 Clean up test deployments?"
     key: "cleanup-block"
-    depends_on: "verify-all"
+    depends_on: "verify-deployment"
 
   # Cleanup Step
   - label: "🧹 Cleanup All Test Deployments"
@@ -129,9 +60,6 @@ steps:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
     command: |
-      echo "🧹 Cleaning up test deployments..."
-      helm uninstall k8s-plugin-nginx -n plugin || true
-      helm uninstall docker-plugin-apache -n plugin || true
-      helm uninstall compose-plugin-nginx -n plugin || true
+      echo "🧹 Cleaning up test deployment..."
       helm uninstall native-agent-busybox -n plugin || true
       echo "✅ Cleanup complete!"
