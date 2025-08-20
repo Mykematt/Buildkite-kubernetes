@@ -1,16 +1,67 @@
 steps:
-  # Test: Native Agent (Mac local agent with kubectl/helm)
-  - label: "⚡ Native Agent + Helm Chart Test"
-    key: "native-agent-test"
+  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access)
+  - label: "🚀 Test 1: Elastic CI Stack + Helm Chart"
+    key: "elastic-ci-test"
     agents:
-      queue: "mac"  # Uses local Mac agent with kubectl/helm in PATH
-    env:
-      KUBECONFIG: "./.kube/config"
+      queue: "default"  # Uses Elastic CI Stack agents with EKS access
+    command: |
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
-          release: "native-agent-nginx"
+          release: "elastic-ci-nginx"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Test 2: Docker Plugin (Containerized execution with EKS access)
+  - label: "🐳 Test 2: Docker Plugin + Helm Chart"
+    key: "docker-plugin-test"
+    depends_on: "elastic-ci-test"
+    agents:
+      queue: "default"
+    plugins:
+      - docker#v5.8.0:
+          image: "dtzar/helm-kubectl:latest"
+          propagate-environment: true
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/apache"
+          release: "docker-plugin-apache"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
+          wait: true
+          atomic: true
+          create_namespace: true
+    command: |
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+
+  # Test 3: Docker Compose Plugin (Multi-container execution with EKS access)
+  - label: "🐙 Test 3: Docker Compose Plugin + Helm Chart"
+    key: "docker-compose-test"
+    depends_on: "docker-plugin-test"
+    agents:
+      queue: "default"
+    command: |
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+    plugins:
+      - docker-compose#v4.16.0:
+          run: helm-deployer
+          propagate-environment: true
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
+          release: "compose-plugin-nginx"
           namespace: plugin
           set:
             - service.type=ClusterIP
@@ -20,9 +71,9 @@ steps:
           create_namespace: true
 
   # Verification Step
-  - label: "✅ Verify Native Agent Deployment"
-    key: "verify-deployment"
-    depends_on: "native-agent-test"
+  - label: "✅ Verify All Deployments"
+    key: "verify-all"
+    depends_on: "docker-compose-test"
     agents:
       queue: kubernetes
     plugins:
@@ -33,18 +84,18 @@ steps:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
     command: |
-      echo "🔍 Verifying native agent deployment..."
+      echo "🔍 Verifying all deployments..."
       helm list -n plugin
       echo ""
       echo "📊 Deployment Status:"
       kubectl get deployments -n plugin
       echo ""
-      echo "🎯 Native agent deployment test successful!"
+      echo "🎯 All 3 deployment methods tested successfully!"
 
   # Cleanup Block
   - block: "🧹 Clean up test deployments?"
     key: "cleanup-block"
-    depends_on: "verify-deployment"
+    depends_on: "verify-all"
 
   # Cleanup Step
   - label: "🧹 Cleanup All Test Deployments"
@@ -60,6 +111,8 @@ steps:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
     command: |
-      echo "🧹 Cleaning up test deployment..."
-      helm uninstall native-agent-nginx -n plugin || true
+      echo "🧹 Cleaning up test deployments..."
+      helm uninstall elastic-ci-nginx -n plugin || true
+      helm uninstall docker-plugin-apache -n plugin || true
+      helm uninstall compose-plugin-nginx -n plugin || true
       echo "✅ Cleanup complete!"
