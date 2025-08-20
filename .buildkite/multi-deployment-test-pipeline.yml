@@ -9,8 +9,7 @@ steps:
             containers:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
-        propagate-environment: true
-      - ../deployment-helm-chart-buildkite-plugin:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/redis"
           release: "k8s-plugin-redis"
@@ -32,7 +31,7 @@ steps:
           volumes:
             - "./.kube:/workspace/.kube:ro"
           propagate-environment: true
-      - ../deployment-helm-chart-buildkite-plugin:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/postgresql"
           release: "docker-plugin-postgres"
@@ -50,7 +49,7 @@ steps:
       - docker-compose#v4.16.0:
           run: helm-deployer
           propagate-environment: true
-      - ../deployment-helm-chart-buildkite-plugin:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/mongodb"
           release: "compose-plugin-mongo"
@@ -69,7 +68,7 @@ steps:
     env:
       KUBECONFIG: "./.kube/config"
     plugins:
-      - ../deployment-helm-chart-buildkite-plugin:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/mysql"
           release: "native-agent-mysql"
@@ -90,7 +89,6 @@ steps:
             containers:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
-        propagate-environment: true
     command: |
       echo "🔍 Verifying all deployments..."
       helm list -n default
@@ -116,7 +114,6 @@ steps:
             containers:
             - image: dtzar/helm-kubectl:latest
               name: helm-kubectl
-        propagate-environment: true
     command: |
       echo "🧹 Cleaning up test deployments..."
       helm uninstall k8s-plugin-redis -n default || true
