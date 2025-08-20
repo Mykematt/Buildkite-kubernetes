@@ -33,10 +33,11 @@ steps:
     agents:
       queue: "default"
     command: |
-      # Install AWS CLI
+      # Install AWS CLI to /tmp (writable location)
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip awscliv2.zip
-      ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+      ./aws/install --bin-dir /tmp/aws-cli --install-dir /tmp/aws-cli-install
+      export PATH="/tmp/aws-cli:$PATH"
       
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
@@ -63,10 +64,11 @@ steps:
     agents:
       queue: "default"
     command: |
-      # Install AWS CLI
+      # Install AWS CLI to /tmp (writable location)
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       unzip awscliv2.zip
-      ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+      ./aws/install --bin-dir /tmp/aws-cli --install-dir /tmp/aws-cli-install
+      export PATH="/tmp/aws-cli:$PATH"
       
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
