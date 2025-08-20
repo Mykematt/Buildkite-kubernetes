@@ -1,0 +1,306 @@
+[
+  {
+    "ParameterKey": "EnableInstanceStorage",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "SecretsBucket",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "ScalerMinPollInterval",
+    "ParameterValue": "10s"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentTimestampLines",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "RootVolumeEncrypted",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "EnableCostAllocationTags",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "CostAllocationTagName",
+    "ParameterValue": "CreatedBy"
+  },
+  {
+    "ParameterKey": "BuildkiteQueue",
+    "ParameterValue": "default"
+  },
+  {
+    "ParameterKey": "ScaleInIdlePeriod",
+    "ParameterValue": "600"
+  },
+  {
+    "ParameterKey": "RootVolumeSize",
+    "ParameterValue": "250"
+  },
+  {
+    "ParameterKey": "OnDemandPercentage",
+    "ParameterValue": "100"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentToken",
+    "ParameterValue": "****"
+  },
+  {
+    "ParameterKey": "ImageId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "CostAllocationTagValue",
+    "ParameterValue": "buildkite-elastic-ci-stack-for-aws"
+  },
+  {
+    "ParameterKey": "PipelineSigningKMSKeyId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteTerminateInstanceAfterJob",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentTracingBackend",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "LogRetentionDays",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentTokenParameterStoreKMSKey",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "ScaleOutFactor",
+    "ParameterValue": "1.0"
+  },
+  {
+    "ParameterKey": "ImageIdParameter",
+    "ParameterValue": "ami-002985e05d398c06a"
+  },
+  {
+    "ParameterKey": "RootVolumeName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "AuthorizedUsersUrl",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteAgentScalerServerlessARN",
+    "ParameterValue": "arn:aws:serverlessrepo:us-east-1:172840064832:applications/buildkite-agent-scaler"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentExperiments",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "EnableDockerExperimental",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "SecretsBucketEncryption",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "SecurityGroupIds",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteAgentTags",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteWindowsAdministrator",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "InstanceName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "AgentEndpoint",
+    "ParameterValue": "https://agent.buildkite.com/v3"
+  },
+  {
+    "ParameterKey": "AgentEnvFileUrl",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "InstanceRoleName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteAgentSignalGracePeriod",
+    "ParameterValue": "60"
+  },
+  {
+    "ParameterKey": "RootVolumeIops",
+    "ParameterValue": "1000"
+  },
+  {
+    "ParameterKey": "PipelineSigningKMSKeySpec",
+    "ParameterValue": "none"
+  },
+  {
+    "ParameterKey": "SecretsBucketRegion",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "ScalerEnableExperimentalElasticCIMode",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "InstanceOperatingSystem",
+    "ParameterValue": "linux"
+  },
+  {
+    "ParameterKey": "ECRAccessPolicy",
+    "ParameterValue": "none"
+  },
+  {
+    "ParameterKey": "EnableSecretsPlugin",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "EnableDetailedMonitoring",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "EnableDockerUserNamespaceRemap",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "BuildkiteAdditionalSudoPermissions",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "ArtifactsBucket",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BootstrapScriptUrl",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "InstanceTypes",
+    "ParameterValue": "t3.large"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentEnableGitMirrors",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "EnableECRPlugin",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "SpotAllocationStrategy",
+    "ParameterValue": "capacity-optimized"
+  },
+  {
+    "ParameterKey": "RootVolumeType",
+    "ParameterValue": "gp3"
+  },
+  {
+    "ParameterKey": "InstanceRolePermissionsBoundaryARN",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteAgentTokenParameterStorePath",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "IMDSv2Tokens",
+    "ParameterValue": "optional"
+  },
+  {
+    "ParameterKey": "InstanceCreationTimeout",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "AvailabilityZones",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteAgentRelease",
+    "ParameterValue": "stable"
+  },
+  {
+    "ParameterKey": "DockerNetworkingProtocol",
+    "ParameterValue": "ipv4"
+  },
+  {
+    "ParameterKey": "AssociatePublicIpAddress",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "PipelineSigningVerificationFailureBehavior",
+    "ParameterValue": "block"
+  },
+  {
+    "ParameterKey": "MaxSize",
+    "ParameterValue": "10"
+  },
+  {
+    "ParameterKey": "RootVolumeThroughput",
+    "ParameterValue": "125"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "MinSize",
+    "ParameterValue": "0"
+  },
+  {
+    "ParameterKey": "ScaleOutForWaitingJobs",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "Subnets",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "ManagedPolicyARNs",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "BuildkiteAgentScalerVersion",
+    "ParameterValue": "1.9.4"
+  },
+  {
+    "ParameterKey": "AgentsPerInstance",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "ScalerEventSchedulePeriod",
+    "ParameterValue": "1 minute"
+  },
+  {
+    "ParameterKey": "PipelineSigningKMSAccess",
+    "ParameterValue": "sign-and-verify"
+  },
+  {
+    "ParameterKey": "EnableDockerLoginPlugin",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "BuildkiteAgentCancelGracePeriod",
+    "ParameterValue": "60"
+  },
+  {
+    "ParameterKey": "MountTmpfsAtTmp",
+    "ParameterValue": "true"
+  }
+]
