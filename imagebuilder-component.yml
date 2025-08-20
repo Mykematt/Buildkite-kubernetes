@@ -1,0 +1,38 @@
+name: InstallHelmKubectl
+description: Install Helm and kubectl on Buildkite Elastic Stack AMI
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: InstallKubectl
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo "Installing kubectl..."
+            - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            - chmod +x kubectl
+            - sudo mv kubectl /usr/local/bin/
+            - kubectl version --client
+
+      - name: InstallHelm
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo "Installing Helm..."
+            - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+            - chmod 700 get_helm.sh
+            - sudo ./get_helm.sh
+            - helm version
+
+  - name: validate
+    steps:
+      - name: VerifyInstallations
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo "Verifying kubectl installation..."
+            - kubectl version --client
+            - echo "Verifying Helm installation..."
+            - helm version
+            - echo "All tools installed successfully!"

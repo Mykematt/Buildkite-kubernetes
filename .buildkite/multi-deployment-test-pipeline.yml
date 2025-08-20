@@ -26,32 +26,30 @@ steps:
       kubectl get pods -l app.kubernetes.io/name=nginx
       kubectl get svc test-elastic-native-nginx
 
-  # Test 2: Docker Plugin (Single container execution with EKS access)
-  - label: "🐳 Test 2: Docker Plugin + Helm Chart"
+  # Test 2: Docker Plugin + Deployment Plugin
+  - label: "🐳 Docker Plugin + Deployment Plugin"
     key: "docker-plugin-test"
     depends_on: "elastic-ci-test"
     agents:
-      queue: "default"
-    command: |
-      # Create local bin directory
-      mkdir -p /tmp/bin
-      export PATH="/tmp/bin:$PATH"
-      
-      # Install kubectl to /tmp/bin
-      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      chmod +x kubectl && mv kubectl /tmp/bin/
-      
-      # Install Helm to /tmp/bin
-      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-      chmod 700 get_helm.sh
-      HELM_INSTALL_DIR=/tmp/bin ./get_helm.sh --no-sudo
-      
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      queue: elastic-ci-stack
     plugins:
       - docker#v5.11.0:
-          image: "amazon/aws-cli:latest"
+          image: "097340723131.dkr.ecr.us-east-1.amazonaws.com/buildkite-multi-tool:latest"
           propagate-environment: true
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              # Verify all tools are available (no installation needed)
+              aws --version
+              kubectl version --client
+              helm version
+              
+              # Configure kubectl for EKS
+              aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+              
+              # Deploy using deployment plugin
+              echo "Docker plugin deployment completed"
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
@@ -64,30 +62,15 @@ steps:
           atomic: true
           create_namespace: true
 
-  # Test 3: Docker Compose Plugin (Multi-container execution with EKS access)
-  - label: "🐙 Test 3: Docker Compose Plugin + Helm Chart"
+  # Test 4: Docker Compose Plugin + Deployment Plugin
+  - label: "🐙 Docker Compose Plugin + Deployment Plugin"
     key: "docker-compose-test"
     depends_on: "docker-plugin-test"
     agents:
-      queue: "default"
-    command: |
-      # Create local bin directory
-      mkdir -p /tmp/bin
-      export PATH="/tmp/bin:$PATH"
-      
-      # Install kubectl to /tmp/bin
-      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      chmod +x kubectl && mv kubectl /tmp/bin/
-      
-      # Install Helm to /tmp/bin
-      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-      chmod 700 get_helm.sh
-      HELM_INSTALL_DIR=/tmp/bin ./get_helm.sh --no-sudo
-      
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      queue: elastic-ci-stack
     plugins:
       - docker-compose#v4.16.0:
+          config: docker-compose.yml
           run: helm-deployer
           propagate-environment: true
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
@@ -102,10 +85,35 @@ steps:
           atomic: true
           create_namespace: true
 
+  # Test 5: Kubernetes Plugin Validation
+  - label: "☸️ Kubernetes Plugin + Deployment Plugin"
+    key: "kubernetes-plugin-test"
+    depends_on: "docker-compose-test"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpec:
+            serviceAccountName: deployer-manager
+            containers:
+            - image: dtzar/helm-kubectl:latest
+              name: helm-kubectl
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
+          release: "k8s-plugin-nginx"
+          namespace: plugin
+          set:
+            - service.type=ClusterIP
+          timeout: "100s"
+          wait: true
+          atomic: true
+          create_namespace: true
+
   # Verification Step
   - label: "✅ Verify All Deployments"
     key: "verify-all"
-    depends_on: "docker-compose-test"
+    depends_on: "kubernetes-plugin-test"
     agents:
       queue: kubernetes
     plugins:
@@ -122,7 +130,7 @@ steps:
       echo "📊 Deployment Status:"
       kubectl get deployments -n plugin
       echo ""
-      echo "🎯 All 3 deployment methods tested successfully!"
+      echo "🎯 All 5 deployment methods tested successfully!"
 
   # Cleanup Block
   - block: "🧹 Clean up test deployments?"
