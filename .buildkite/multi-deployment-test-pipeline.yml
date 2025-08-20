@@ -13,8 +13,8 @@ steps:
               name: helm-kubectl
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/redis"
-          release: "k8s-plugin-redis"
+          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
+          release: "k8s-plugin-nginx"
           namespace: default
           timeout: "300s"
           wait: true
@@ -35,8 +35,8 @@ steps:
           propagate-environment: true
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/postgresql"
-          release: "docker-plugin-postgres"
+          chart: "oci://registry-1.docker.io/bitnamicharts/apache"
+          release: "docker-plugin-apache"
           namespace: default
           timeout: "300s"
           wait: true
@@ -53,8 +53,8 @@ steps:
           propagate-environment: true
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/mongodb"
-          release: "compose-plugin-mongo"
+          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
+          release: "compose-plugin-nginx"
           namespace: default
           timeout: "300s"
           wait: true
@@ -72,8 +72,8 @@ steps:
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/mysql"
-          release: "native-agent-mysql"
+          chart: "oci://registry-1.docker.io/bitnamicharts/busybox"
+          release: "native-agent-busybox"
           namespace: default
           timeout: "300s"
           wait: true
@@ -122,8 +122,8 @@ steps:
               name: helm-kubectl
     command: |
       echo "🧹 Cleaning up test deployments..."
-      helm uninstall k8s-plugin-redis -n default || true
-      helm uninstall docker-plugin-postgres -n default || true
-      helm uninstall compose-plugin-mongo -n default || true
-      helm uninstall native-agent-mysql -n default || true
+      helm uninstall k8s-plugin-nginx -n default || true
+      helm uninstall docker-plugin-apache -n default || true
+      helm uninstall compose-plugin-nginx -n default || true
+      helm uninstall native-agent-busybox -n default || true
       echo "✅ Cleanup complete!"
