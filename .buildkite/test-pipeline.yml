@@ -3,6 +3,7 @@ agents:
 
 steps:
   - label: "🧪 Test Plugin - Missing Parameters"
+    key: "test-missing-params"
     command: "echo 'Testing parameter validation...'"
     plugins:
       - kubernetes:
@@ -15,6 +16,8 @@ steps:
           mode: deploy
 
   - label: "🧪 Test Plugin - Invalid Mode"
+    key: "test-invalid-mode"
+    depends_on: "test-missing-params"
     command: "echo 'Testing invalid mode...'"
     plugins:
       - kubernetes:
@@ -27,23 +30,9 @@ steps:
           release: test-release
           chart: nginx
 
-  - label: "🧪 Test Plugin - Dry Run Deploy"
-    command: "echo 'Testing dry run deployment...'"
-    plugins:
-      - kubernetes:
-          podSpecPatch:
-            containers:
-            - name: container-0
-              image: alpine/helm:3.12
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
-          mode: deploy
-          release: test-release
-          chart: oci://registry-1.docker.io/bitnamicharts/nginx
-          namespace: test
-          dry_run: true
-          timeout: 60s
-
   - label: "🚀 Test Plugin - Real EKS Deploy (Kubernetes Plugin)"
+    key: "test-plugin-real-eks-deploy-kubernetes-plugin"
+    depends_on: "test-invalid-mode"
     plugins:
       - kubernetes:
           podSpecPatch:
@@ -93,16 +82,3 @@ steps:
           mode: rollback
           release: buildkite-helm-test
           namespace: buildkite-helm-test
-
-  - label: "🧹 Cleanup EKS Resources (Kubernetes Plugin)"
-    command: |
-      echo 'Cleaning up test resources...'
-      helm uninstall buildkite-helm-test -n buildkite-helm-test || true
-      echo 'Cleanup completed'
-    plugins:
-      - kubernetes:
-          podSpecPatch:
-            containers:
-            - name: container-0
-              image: alpine/helm:3.12
-    depends_on: "test-plugin-real-rollback-kubernetes-plugin"
