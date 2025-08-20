@@ -5,6 +5,11 @@ steps:
     agents:
       queue: "default"  # Uses Elastic CI Stack agents with EKS access
     command: |
+      # Install Helm on the Elastic CI Stack agent
+      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      chmod 700 get_helm.sh
+      ./get_helm.sh
+      
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
