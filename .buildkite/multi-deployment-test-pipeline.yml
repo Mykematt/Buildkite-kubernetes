@@ -1,9 +1,9 @@
 steps:
-  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access)
-  - label: "🚀 Test 1: Elastic CI Stack + Helm Chart"
-    key: "elastic-ci-test"
+  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Install Helm
+  - label: "🔧 Install Helm on Elastic CI Stack Agent"
+    key: "install-helm"
     agents:
-      queue: "default"  # Uses Elastic CI Stack agents with EKS access
+      queue: "default"
     command: |
       # Install Helm on the Elastic CI Stack agent
       curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -12,6 +12,17 @@ steps:
       
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      
+      # Verify installation
+      helm version
+      kubectl version --client
+
+  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Deploy
+  - label: "🚀 Test 1: Elastic CI Stack + Helm Chart"
+    key: "elastic-ci-test"
+    depends_on: "install-helm"
+    agents:
+      queue: "default"  # Uses Elastic CI Stack agents with EKS access
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
