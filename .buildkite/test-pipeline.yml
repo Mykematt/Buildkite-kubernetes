@@ -10,7 +10,7 @@ steps:
           podSpecPatch:
             containers:
             - name: container-0
-              image: alpine/helm:3.12
+              image: dtzar/helm-kubectl:latest
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           # Missing required parameters - should fail
           mode: deploy
@@ -24,7 +24,7 @@ steps:
           podSpecPatch:
             containers:
             - name: container-0
-              image: alpine/helm:3.12
+              image: dtzar/helm-kubectl:latest
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: invalid
           release: test-release
@@ -38,7 +38,7 @@ steps:
           podSpecPatch:
             containers:
             - name: container-0
-              image: alpine/helm:3.12
+              image: dtzar/helm-kubectl:latest
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
           release: buildkite-helm-test
@@ -63,7 +63,7 @@ steps:
           podSpecPatch:
             containers:
             - name: container-0
-              image: alpine/helm:3.12
+              image: dtzar/helm-kubectl:latest
     depends_on: "test-plugin-real-eks-deploy-kubernetes-plugin"
 
   - block: "🤔 Test Rollback?"
@@ -77,7 +77,7 @@ steps:
           podSpecPatch:
             containers:
             - name: container-0
-              image: alpine/helm:3.12
+              image: dtzar/helm-kubectl:latest
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: rollback
           release: buildkite-helm-test
