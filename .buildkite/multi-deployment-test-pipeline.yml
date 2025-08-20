@@ -1,0 +1,126 @@
+steps:
+  # Test 1: Kubernetes Plugin (Current Working Method)
+  - label: "🚀 Test 1: Kubernetes Plugin + Helm Chart"
+    key: "k8s-plugin-test"
+    plugins:
+      - kubernetes:
+          podSpec:
+            serviceAccountName: deployer-manager
+            containers:
+            - image: dtzar/helm-kubectl:latest
+              name: helm-kubectl
+        propagate-environment: true
+      - ../deployment-helm-chart-buildkite-plugin:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/redis"
+          release: "k8s-plugin-redis"
+          namespace: default
+          timeout: "300s"
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Test 2: Docker Plugin Approach
+  - label: "🐳 Test 2: Docker Plugin + Helm Chart"
+    key: "docker-plugin-test"
+    depends_on: "k8s-plugin-test"
+    plugins:
+      - docker#v5.8.0:
+          image: "dtzar/helm-kubectl:latest"
+          environment:
+            - KUBECONFIG=/workspace/.kube/config
+          volumes:
+            - "./.kube:/workspace/.kube:ro"
+          propagate-environment: true
+      - ../deployment-helm-chart-buildkite-plugin:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/postgresql"
+          release: "docker-plugin-postgres"
+          namespace: default
+          timeout: "300s"
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Test 3: Docker Compose Plugin Approach
+  - label: "🐙 Test 3: Docker Compose Plugin + Helm Chart"
+    key: "docker-compose-test"
+    depends_on: "docker-plugin-test"
+    plugins:
+      - docker-compose#v4.16.0:
+          run: helm-deployer
+          propagate-environment: true
+      - ../deployment-helm-chart-buildkite-plugin:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/mongodb"
+          release: "compose-plugin-mongo"
+          namespace: default
+          timeout: "300s"
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Test 4: Native Agent (Mac local agent with kubectl/helm)
+  - label: "⚡ Test 4: Native Agent + Helm Chart"
+    key: "native-agent-test"
+    depends_on: "docker-compose-test"
+    agents:
+      queue: "mac"  # Uses local Mac agent with kubectl/helm in PATH
+    env:
+      KUBECONFIG: "./.kube/config"
+    plugins:
+      - ../deployment-helm-chart-buildkite-plugin:
+          mode: deploy
+          chart: "oci://registry-1.docker.io/bitnamicharts/mysql"
+          release: "native-agent-mysql"
+          namespace: default
+          timeout: "300s"
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Verification Step
+  - label: "✅ Verify All Deployments"
+    key: "verify-all"
+    depends_on: "native-agent-test"
+    plugins:
+      - kubernetes:
+          podSpec:
+            serviceAccountName: deployer-manager
+            containers:
+            - image: dtzar/helm-kubectl:latest
+              name: helm-kubectl
+        propagate-environment: true
+    command: |
+      echo "🔍 Verifying all deployments..."
+      helm list -n default
+      echo ""
+      echo "📊 Deployment Status:"
+      kubectl get deployments -n default
+      echo ""
+      echo "🎯 All deployment methods tested successfully!"
+
+  # Cleanup Block
+  - block: "🧹 Clean up test deployments?"
+    key: "cleanup-block"
+    depends_on: "verify-all"
+
+  # Cleanup Step
+  - label: "🧹 Cleanup All Test Deployments"
+    key: "cleanup-all"
+    depends_on: "cleanup-block"
+    plugins:
+      - kubernetes:
+          podSpec:
+            serviceAccountName: deployer-manager
+            containers:
+            - image: dtzar/helm-kubectl:latest
+              name: helm-kubectl
+        propagate-environment: true
+    command: |
+      echo "🧹 Cleaning up test deployments..."
+      helm uninstall k8s-plugin-redis -n default || true
+      helm uninstall docker-plugin-postgres -n default || true
+      helm uninstall compose-plugin-mongo -n default || true
+      helm uninstall native-agent-mysql -n default || true
+      echo "✅ Cleanup complete!"

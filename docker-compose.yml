@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  helm-deployer:
+    image: dtzar/helm-kubectl:latest
+    volumes:
+      - ./.kube:/root/.kube:ro
+      - ./:/workspace
+    working_dir: /workspace
+    environment:
+      - KUBECONFIG=/root/.kube/config
+      - BUILDKITE_BUILD_ID
+      - BUILDKITE_JOB_ID
+      - BUILDKITE_STEP_ID
+      - BUILDKITE_AGENT_ACCESS_TOKEN
+    command: sleep 300
