@@ -4,15 +4,6 @@ steps:
     key: "elastic-deploy"
     agents:
       queue: default
-    command: |
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-      # Verify kubectl connectivity
-      echo "Testing kubectl connectivity..."
-      kubectl get nodes
-      # Verify helm is available
-      echo "Testing helm..."
-      helm version
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
@@ -128,8 +119,6 @@ steps:
     agents:
       queue: default
     command: |
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
