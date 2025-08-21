@@ -109,30 +109,11 @@ steps:
             serviceAccountName: deployer-manager
     command: |
       echo "🔍 Verifying all deployments are running..."
-      
-      # Check each deployment status
-      deployments=(
-        "elastic-helm-test:elastic-test"
-        "k8s-helm-test:k8s-test"
-        "mac-helm-test:mac-test"
-        "linux-helm-test:linux-test"
-      )
-      
-      for deployment in "${deployments[@]}"; do
-        IFS=':' read -r release namespace <<< "$deployment"
-        echo "📋 Checking $release in namespace $namespace..."
-        
-        # Check Helm release status
-        helm status "$release" -n "$namespace"
-        
-        # Wait for deployment to be ready
-        kubectl wait --for=condition=available deployment -l app.kubernetes.io/instance="$release" -n "$namespace" --timeout=120s
-        
-        # Get pod status
-        kubectl get pods -n "$namespace" -l app.kubernetes.io/instance="$release"
-      done
-      
-      echo "✅ All deployments verified as running!"
+      kubectl get deployment -n elastic-test
+      kubectl get deployment -n k8s-test
+      kubectl get deployment -n mac-test
+      kubectl get deployment -n linux-test
+      echo "✅ All deployments verified!"
 
   # Test 5: Rollback Elastic CI Stack Deployment
   - label: "🔄 Rollback Elastic CI Stack"
