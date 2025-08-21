@@ -4,12 +4,16 @@ steps:
     key: "elastic-deploy"
     agents:
       queue: default
+    command: |
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: elastic-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
           namespace: elastic-test
+          kubeconfig: "${HOME}/.kube/config"
           set:
             - service.type=ClusterIP
           timeout: 100s
@@ -119,12 +123,15 @@ steps:
     agents:
       queue: default
     command: |
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: rollback
           release: elastic-helm-test
           namespace: elastic-test
+          kubeconfig: "${HOME}/.kube/config"
 
   # Test 6: Rollback Kubernetes Agent Deployment  
   - label: "🔄 Rollback Kubernetes Agent"
