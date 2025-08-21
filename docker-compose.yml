@@ -1,23 +1,26 @@
 version: '3.8'
+
 services:
   helm-deployer:
-    image: 097340723131.dkr.ecr.us-east-1.amazonaws.com/buildkite-multi-tool:latest
-    volumes:
-      - ~/.aws:/root/.aws:ro
-      - ~/.kube:/root/.kube:ro
-    environment:
-      - AWS_REGION=us-east-1
+    image: dtzar/helm-kubectl:latest
     working_dir: /workdir
+    volumes:
+      - .:/workdir
+    environment:
+      - AWS_DEFAULT_REGION=us-east-1
     command: |
-      sh -c "
-      # Verify all tools are available (no installation needed)
-      aws --version
-      kubectl version --client
-      helm version
-      
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-buildkite-cluster
-      
-      echo 'Docker Compose plugin deployment completed'
-      sleep 300
+      bash -c "
+        # Install AWS CLI (container has kubectl and helm pre-installed)
+        apk add --no-cache aws-cli
+        
+        # Configure kubectl for EKS cluster
+        aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+        
+        # Verify tools are available
+        echo '✅ Verifying tools...'
+        helm version
+        kubectl version --client
+        kubectl get nodes
+        
+        echo '🚀 Docker Compose deployment completed'
       "
