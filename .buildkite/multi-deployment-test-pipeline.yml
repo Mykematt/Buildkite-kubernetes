@@ -1,7 +1,7 @@
 steps:
-  # Test 1: Elastic CI Stack Agent (Native EC2 with EKS access) - Pre-installed tools
-  - label: "🚀 Deploy with Elastic CI Stack (Pre-installed Helm)"
-    key: "elastic-ci-test"
+  # Test 1: Elastic CI Stack Agent
+  - label: "☁️ Elastic CI Stack - Deploy"
+    key: "elastic-deploy"
     agents:
       queue: "default"
     command: |
@@ -12,123 +12,206 @@ steps:
       echo "✅ Verifying pre-installed tools..."
       helm version
       kubectl version --client
-      kubectl get nodes
-      
-      # Deploy using pre-installed Helm
-      helm upgrade --install test-elastic-native oci://registry-1.docker.io/bitnamicharts/nginx \
-        --namespace plugin \
-        --create-namespace \
-        --set service.type=ClusterIP \
-        --timeout 100s \
-        --wait \
-        --atomic
-      
-      # Verify deployment
-      kubectl get pods -n plugin -l app.kubernetes.io/name=nginx
-      kubectl get svc -n plugin test-elastic-native-nginx
-
-  # Test 2: Docker Plugin + Deployment Plugin
-  - label: "🐳 Docker Plugin + Deployment Plugin"
-    key: "docker-plugin-test"
-    depends_on: "elastic-ci-test"
-    agents:
-      queue: "default"
     plugins:
-      - docker#v5.11.0:
-          image: "097340723131.dkr.ecr.us-east-1.amazonaws.com/buildkite-multi-tool:latest"
-          propagate-environment: true
-          command:
-            - "/bin/bash"
-            - "-c"
-            - |
-              # Verify all tools are available (no installation needed)
-              aws --version
-              kubectl version --client
-              helm version
-              
-              # Configure kubectl for EKS
-              aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-              
-              # Deploy using deployment plugin
-              echo "Docker plugin deployment completed"
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
-          release: "docker-plugin-nginx"
-          namespace: plugin
+          release: elastic-helm-test
+          chart: oci://registry-1.docker.io/bitnamicharts/nginx
+          namespace: elastic-test
           set:
             - service.type=ClusterIP
-          timeout: "100s"
+          timeout: 100s
           wait: true
           atomic: true
           create_namespace: true
 
-  # Test 3: Docker Compose Plugin + Deployment Plugin
-  - label: "🐙 Docker Compose Plugin + Deployment Plugin"
-    key: "docker-compose-test"
-    depends_on: "docker-plugin-test"
+  # Test 2: Kubernetes Agent
+  - label: "🚀 Kubernetes Agent - Deploy"
+    key: "k8s-deploy"
     agents:
-      queue: "default"
+      queue: kubernetes
     plugins:
-      - docker-compose#v4.16.0:
-          config: docker-compose.yml
-          run: helm-deployer
-          propagate-environment: true
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: dtzar/helm-kubectl:latest
+            serviceAccountName: deployer-manager
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
-          chart: "oci://registry-1.docker.io/bitnamicharts/nginx"
-          release: "compose-plugin-nginx"
-          namespace: plugin
+          release: k8s-helm-test
+          chart: oci://registry-1.docker.io/bitnamicharts/nginx
+          namespace: k8s-test
           set:
             - service.type=ClusterIP
-          timeout: "100s"
+          timeout: 100s
           wait: true
           atomic: true
           create_namespace: true
+
+  # Test 3: Mac Agent
+  - env:
+      KUBECONFIG: "./.kube/config"
+    key: "mac-deploy"
+    label: "🍎 Mac Agent - Deploy"
+    agents:
+      queue: mac
+    command: ''
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          release: mac-helm-test
+          chart: oci://registry-1.docker.io/bitnamicharts/nginx
+          namespace: mac-test
+          set:
+            - service.type=ClusterIP
+          timeout: 100s
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Test 4: Linux Agent
+  - env:
+      KUBECONFIG: "/mnt/mac/Users/olabuildkite/.kube/config"
+    key: "linux-deploy"
+    label: "🐧 Linux Agent - Deploy"
+    agents:
+      queue: linux
+    command: ''
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: deploy
+          release: linux-helm-test
+          chart: oci://registry-1.docker.io/bitnamicharts/nginx
+          namespace: linux-test
+          set:
+            - service.type=ClusterIP
+          timeout: 100s
+          wait: true
+          atomic: true
+          create_namespace: true
+
+  # Test 5: Rollback Elastic CI Stack Deployment
+  - label: "🔄 Rollback Elastic CI Stack"
+    key: "rollback-elastic"
+    depends_on: "elastic-deploy"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: dtzar/helm-kubectl:latest
+            serviceAccountName: deployer-manager
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: rollback
+          release: elastic-helm-test
+          namespace: elastic-test
+    command: |
+      echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
+
+  # Test 6: Rollback Kubernetes Agent Deployment  
+  - label: "🔄 Rollback Kubernetes Agent"
+    key: "rollback-k8s"
+    depends_on: "k8s-deploy"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: dtzar/helm-kubectl:latest
+            serviceAccountName: deployer-manager
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: rollback
+          release: k8s-helm-test
+          namespace: k8s-test
+    command: |
+      echo "🔄 Testing plugin rollback for Kubernetes agent deployment..."
+
+  # Test 7: Rollback Mac Agent Deployment
+  - label: "🔄 Rollback Mac Agent"
+    key: "rollback-mac"
+    depends_on: "mac-deploy"
+    env:
+      KUBECONFIG: "./.kube/config"
+    agents:
+      queue: mac
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: rollback
+          release: mac-helm-test
+          namespace: mac-test
+    command: |
+      echo "🔄 Testing plugin rollback for Mac agent deployment..."
+
+  # Test 8: Rollback Linux Agent Deployment
+  - label: "🔄 Rollback Linux Agent"
+    key: "rollback-linux"
+    depends_on: "linux-deploy"
+    env:
+      KUBECONFIG: "./.kube/config"
+    agents:
+      queue: linux
+    plugins:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
+          mode: rollback
+          release: linux-helm-test
+          namespace: linux-test
+    command: |
+      echo "🔄 Testing plugin rollback for Linux agent deployment..."
 
   # Verification Step
   - label: "✅ Verify All Deployments"
     key: "verify-all"
-    depends_on: "docker-compose-test"
+    depends_on:
+      - "rollback-elastic"
+      - "rollback-k8s"
+      - "rollback-mac"
+      - "rollback-linux"
     agents:
-      queue: kubernetes
-    plugins:
-      - kubernetes:
-          podSpec:
-            serviceAccountName: deployer-manager
-            containers:
-            - image: dtzar/helm-kubectl:latest
-              name: helm-kubectl
+      queue: "default"
     command: |
-      echo "🔍 Verifying all deployments..."
-      helm list -n plugin
-      echo ""
-      echo "📊 Deployment Status:"
-      kubectl get deployments -n plugin
-      echo ""
-      echo "🎯 All 3 deployment methods tested successfully!"
-
-  # Cleanup Block
-  - block: "🧹 Clean up test deployments?"
-    key: "cleanup-block"
-    depends_on: "verify-all"
+      # Configure kubectl for EKS
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      
+      echo "🔍 Verifying all deployments after rollback..."
+      
+      # Check all namespaces and deployments
+      for namespace in elastic-test k8s-test mac-test linux-test; do
+        echo "Checking namespace: $namespace"
+        helm list -n $namespace || echo "No releases in $namespace"
+        kubectl get pods -n $namespace || echo "No pods in $namespace"
+        echo "---"
+      done
+      
+      echo "✅ Verification complete!"
 
   # Cleanup Step
   - label: "🧹 Cleanup All Test Deployments"
     key: "cleanup-all"
-    depends_on: "cleanup-block"
+    depends_on: "verify-all"
     agents:
-      queue: kubernetes
-    plugins:
-      - kubernetes:
-          podSpec:
-            serviceAccountName: deployer-manager
-            containers:
-            - image: dtzar/helm-kubectl:latest
-              name: helm-kubectl
+      queue: "default"
     command: |
-      echo "🧹 Cleaning up test deployments..."
-      helm uninstall test-elastic-native -n plugin || true
-      helm uninstall docker-plugin-nginx -n plugin || true
-      helm uninstall compose-plugin-nginx -n plugin || true
+      # Configure kubectl for EKS
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      
+      echo "🧹 Cleaning up all test deployments..."
+      
+      # Cleanup all test releases
+      helm uninstall elastic-helm-test -n elastic-test || echo "elastic-helm-test already removed"
+      helm uninstall k8s-helm-test -n k8s-test || echo "k8s-helm-test already removed"
+      helm uninstall mac-helm-test -n mac-test || echo "mac-helm-test already removed"
+      helm uninstall linux-helm-test -n linux-test || echo "linux-helm-test already removed"
+      
+      # Delete namespaces
+      kubectl delete namespace elastic-test || echo "elastic-test namespace already removed"
+      kubectl delete namespace k8s-test || echo "k8s-test namespace already removed"
+      kubectl delete namespace mac-test || echo "mac-test namespace already removed"
+      kubectl delete namespace linux-test || echo "linux-test namespace already removed"
+      
       echo "✅ Cleanup complete!"
+      echo "🎯 Multi-agent Helm plugin testing completed successfully!"
