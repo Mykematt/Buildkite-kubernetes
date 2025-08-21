@@ -14,7 +14,7 @@ steps:
       echo "Testing helm..."
       helm version
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: elastic-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -38,7 +38,7 @@ steps:
             - name: container-0
               image: dtzar/helm-kubectl:latest
             serviceAccountName: deployer-manager
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: k8s-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -61,7 +61,7 @@ steps:
       # Configure kubectl for EKS cluster using AWS credentials
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: mac-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -84,7 +84,7 @@ steps:
       # Configure kubectl for EKS cluster using AWS credentials
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: linux-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
@@ -132,7 +132,7 @@ steps:
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: rollback
           release: elastic-helm-test
           namespace: elastic-test
@@ -150,7 +150,7 @@ steps:
             - name: container-0
               image: dtzar/helm-kubectl:latest
             serviceAccountName: deployer-manager
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: rollback
           release: k8s-helm-test
           namespace: k8s-test
@@ -170,7 +170,7 @@ steps:
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       echo "🔄 Testing plugin rollback for Mac agent deployment..."
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: rollback
           release: mac-helm-test
           namespace: mac-test
@@ -188,7 +188,7 @@ steps:
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       echo "🔄 Testing plugin rollback for Linux agent deployment..."
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
+      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: rollback
           release: linux-helm-test
           namespace: linux-test
