@@ -7,6 +7,12 @@ steps:
     command: |
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      # Verify kubectl connectivity
+      echo "Testing kubectl connectivity..."
+      kubectl get nodes
+      # Verify helm is available
+      echo "Testing helm..."
+      helm version
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#6407f6d:
           mode: deploy
