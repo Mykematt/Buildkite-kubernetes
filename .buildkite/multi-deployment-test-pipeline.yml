@@ -21,13 +21,13 @@ steps:
     plugins:
       - artifacts#v1.9.0:
           download: "*"
-          destination: ".kube/"
+          destination: "."
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: elastic-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
           namespace: elastic-test
-          kubeconfig: "${PWD}/.kube/config"
+          kubeconfig: "${PWD}/var/lib/buildkite-agent/.kube/config"
           set:
             - service.type=ClusterIP
           timeout: 100s
