@@ -1,9 +1,9 @@
 steps:
-  # Test 1: Elastic CI Stack Agent
+  # Test 1: Elastic CI Stack
   - label: "☁️ Elastic CI Stack - Deploy"
     key: "elastic-deploy"
     agents:
-      queue: "default"
+      queue: default
     command: |
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
@@ -51,6 +51,9 @@ steps:
     label: "🍎 Mac Agent - Deploy"
     agents:
       queue: mac
+    command: |
+      # Configure kubectl for EKS cluster using AWS credentials
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
@@ -71,6 +74,9 @@ steps:
     label: "🐧 Linux Agent - Deploy"
     agents:
       queue: linux
+    command: |
+      # Configure kubectl for EKS cluster using AWS credentials
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
@@ -112,7 +118,7 @@ steps:
         "linux-helm-test:linux-test"
       )
       
-      for deployment in "$${deployments[@]}"; do
+      for deployment in "${deployments[@]}"; do
         IFS=':' read -r release namespace <<< "$deployment"
         echo "📋 Checking $release in namespace $namespace..."
         
@@ -133,20 +139,16 @@ steps:
     key: "rollback-elastic"
     depends_on: "verify-deployments"
     agents:
-      queue: kubernetes
+      queue: default
+    command: |
+      # Configure kubectl for EKS cluster using IAM role authentication
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
     plugins:
-      - kubernetes:
-          podSpecPatch:
-            containers:
-            - name: container-0
-              image: dtzar/helm-kubectl:latest
-            serviceAccountName: deployer-manager
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: rollback
           release: elastic-helm-test
           namespace: elastic-test
-    command: |
-      echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
 
   # Test 6: Rollback Kubernetes Agent Deployment  
   - label: "🔄 Rollback Kubernetes Agent"
@@ -176,13 +178,15 @@ steps:
       KUBECONFIG: "./.kube/config"
     agents:
       queue: mac
+    command: |
+      # Configure kubectl for EKS cluster using AWS credentials
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      echo "🔄 Testing plugin rollback for Mac agent deployment..."
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: rollback
           release: mac-helm-test
           namespace: mac-test
-    command: |
-      echo "🔄 Testing plugin rollback for Mac agent deployment..."
 
   # Test 8: Rollback Linux Agent Deployment
   - label: "🔄 Rollback Linux Agent"
@@ -192,13 +196,15 @@ steps:
       KUBECONFIG: "/mnt/mac/Users/olabuildkite/.kube/config"
     agents:
       queue: linux
+    command: |
+      # Configure kubectl for EKS cluster using AWS credentials
+      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      echo "🔄 Testing plugin rollback for Linux agent deployment..."
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: rollback
           release: linux-helm-test
           namespace: linux-test
-    command: |
-      echo "🔄 Testing plugin rollback for Linux agent deployment..."
 
   # Verification Step
   - label: "✅ Verify All Deployments"
