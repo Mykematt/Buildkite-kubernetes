@@ -1,5 +1,5 @@
 steps:
-  # Test 1: Elastic CI Stack - Setup kubeconfig first
+  # Test 1: Elastic CI Stack - Setup kubeconfig and upload as artifact
   - label: "🔧 Setup EKS Access"
     key: "setup-eks"
     agents:
@@ -8,6 +8,9 @@ steps:
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
       echo "✅ Kubeconfig configured for EKS cluster"
+      
+      # Upload kubeconfig as artifact for other steps
+      buildkite-agent artifact upload "${HOME}/.kube/config"
 
   # Test 1: Elastic CI Stack - Deploy with plugin
   - label: "☁️ Elastic CI Stack - Deploy"
@@ -16,12 +19,15 @@ steps:
     agents:
       queue: default
     plugins:
+      - artifacts#v1.9.0:
+          download: "config"
+          destination: ".kube/"
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
           release: elastic-helm-test
           chart: oci://registry-1.docker.io/bitnamicharts/nginx
           namespace: elastic-test
-          kubeconfig: "${HOME}/.kube/config"
+          kubeconfig: "${PWD}/.kube/config"
           set:
             - service.type=ClusterIP
           timeout: 100s
