@@ -20,7 +20,7 @@ steps:
       queue: default
     plugins:
       - artifacts#v1.9.0:
-          download: "config"
+          download: ".kube/config"
           destination: ".kube/"
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#7120eaa:
           mode: deploy
