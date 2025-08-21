@@ -7,11 +7,6 @@ steps:
     command: |
       # Configure kubectl for EKS cluster using IAM role authentication
       aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-      
-      # Verify pre-installed tools are available
-      echo "✅ Verifying pre-installed tools..."
-      helm version
-      kubectl version --client
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
@@ -56,7 +51,6 @@ steps:
     label: "🍎 Mac Agent - Deploy"
     agents:
       queue: mac
-    command: ''
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
@@ -77,7 +71,6 @@ steps:
     label: "🐧 Linux Agent - Deploy"
     agents:
       queue: linux
-    command: ''
     plugins:
       - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#main:
           mode: deploy
@@ -91,10 +84,54 @@ steps:
           atomic: true
           create_namespace: true
 
+  # Verification: Check All Deployments Are Running
+  - label: "✅ Verify All Deployments Running"
+    key: "verify-deployments"
+    depends_on: 
+      - "elastic-deploy"
+      - "k8s-deploy"
+      - "mac-deploy"
+      - "linux-deploy"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpecPatch:
+            containers:
+            - name: container-0
+              image: dtzar/helm-kubectl:latest
+            serviceAccountName: deployer-manager
+    command: |
+      echo "🔍 Verifying all deployments are running..."
+      
+      # Check each deployment status
+      deployments=(
+        "elastic-helm-test:elastic-test"
+        "k8s-helm-test:k8s-test"
+        "mac-helm-test:mac-test"
+        "linux-helm-test:linux-test"
+      )
+      
+      for deployment in "$${deployments[@]}"; do
+        IFS=':' read -r release namespace <<< "$deployment"
+        echo "📋 Checking $release in namespace $namespace..."
+        
+        # Check Helm release status
+        helm status "$release" -n "$namespace"
+        
+        # Wait for deployment to be ready
+        kubectl wait --for=condition=available deployment -l app.kubernetes.io/instance="$release" -n "$namespace" --timeout=120s
+        
+        # Get pod status
+        kubectl get pods -n "$namespace" -l app.kubernetes.io/instance="$release"
+      done
+      
+      echo "✅ All deployments verified as running!"
+
   # Test 5: Rollback Elastic CI Stack Deployment
   - label: "🔄 Rollback Elastic CI Stack"
     key: "rollback-elastic"
-    depends_on: "elastic-deploy"
+    depends_on: "verify-deployments"
     agents:
       queue: kubernetes
     plugins:
@@ -114,7 +151,7 @@ steps:
   # Test 6: Rollback Kubernetes Agent Deployment  
   - label: "🔄 Rollback Kubernetes Agent"
     key: "rollback-k8s"
-    depends_on: "k8s-deploy"
+    depends_on: "verify-deployments"
     agents:
       queue: kubernetes
     plugins:
@@ -134,7 +171,7 @@ steps:
   # Test 7: Rollback Mac Agent Deployment
   - label: "🔄 Rollback Mac Agent"
     key: "rollback-mac"
-    depends_on: "mac-deploy"
+    depends_on: "verify-deployments"
     env:
       KUBECONFIG: "./.kube/config"
     agents:
@@ -150,9 +187,9 @@ steps:
   # Test 8: Rollback Linux Agent Deployment
   - label: "🔄 Rollback Linux Agent"
     key: "rollback-linux"
-    depends_on: "linux-deploy"
+    depends_on: "verify-deployments"
     env:
-      KUBECONFIG: "./.kube/config"
+      KUBECONFIG: "/mnt/mac/Users/olabuildkite/.kube/config"
     agents:
       queue: linux
     plugins:
