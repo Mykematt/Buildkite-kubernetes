@@ -128,6 +128,9 @@ steps:
         command: |
           echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
         plugins:
+          - artifacts#v1.9.0:
+              download: "*"
+              destination: "."
           - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
               mode: rollback
               release: elastic-helm-test
