@@ -193,7 +193,7 @@ steps:
   # Cleanup Step
   - label: "🧹 Cleanup All Test Deployments"
     key: "cleanup-all"
-    depends_on: "verify-all"
+    depends_on: "rollback-group"
     agents:
       queue: "default"
     command: |
