@@ -1,5 +1,5 @@
-# Demo: WORKING Init Container AWS CLI Installation
-# Fixed version that should complete the end-to-end flow
+# Demo: Installing AWS CLI at runtime without modifying base image
+# This addresses the customer question about plugin dependencies
 
 steps:
   - label: "🚀 WORKING: Init Container AWS CLI Demo"
@@ -14,7 +14,7 @@ steps:
       echo "--- 🧪 Step 2: Test AWS CLI availability"
       echo "Current PATH: $PATH"
       
-      if command -v aws >/dev/null 2>&1; then
+      if command -v aws > /dev/null 2>&1; then
         echo "✅ SUCCESS: AWS CLI found in PATH!"
         which aws
         
@@ -47,42 +47,92 @@ steps:
     plugins:
       - kubernetes:
           podSpec:
-            # FIXED: More reliable init container installation
+            # Init container installs AWS CLI into shared volume
             initContainers:
               - name: install-aws-cli
                 image: python:3.9-alpine
-                command: ["/bin/sh"]
+                command: ["/bin/sh", "-c"]
                 args:
-                  - -c
                   - |
-                    set -ex  # Exit on error, show commands
-                    echo "=== INIT CONTAINER: Starting AWS CLI installation ==="
+                    set -ex
+                    echo "🚀 Installing AWS CLI in init container (Architecture-aware)..."
                     
-                    echo "Step 1: Install system dependencies"
+                    # Step 1: Detect architecture
+                    ARCH=$(uname -m)
+                    echo "Detected architecture: $ARCH"
+                    
+                    # Step 2: Install basic tools
                     apk add --no-cache curl unzip
                     
-                    echo "Step 2: Install AWS CLI v2 (more reliable method)"
-                    cd /tmp
-                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                    unzip awscliv2.zip
+                    # Step 3: Try binary installer with correct architecture
+                    case $ARCH in
+                      x86_64)
+                        echo "Using x86_64 AWS CLI binary"
+                        if curl -f "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"; then
+                          echo "Downloaded x86_64 binary successfully"
+                        else
+                          echo "Failed to download x86_64 binary, will use pip fallback"
+                        fi
+                        ;;
+                      aarch64|arm64)
+                        echo "Using aarch64 AWS CLI binary" 
+                        if curl -f "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"; then
+                          echo "Downloaded aarch64 binary successfully"
+                        else
+                          echo "Failed to download aarch64 binary, will use pip fallback"
+                        fi
+                        ;;
+                      *)
+                        echo "Unsupported architecture for binary installer: $ARCH"
+                        echo "Will use pip fallback"
+                        ;;
+                    esac
                     
-                    echo "Step 3: Install to temporary location"
-                    ./aws/install --install-dir /tmp/aws-cli --bin-dir /tmp/aws-bin
+                    # Step 4: Try binary installation if we have the zip file
+                    if [ -f "awscliv2.zip" ]; then
+                      echo "Attempting binary installation..."
+                      unzip awscliv2.zip
+                      if ./aws/install --install-dir /tmp/aws-cli --bin-dir /tmp/aws-bin; then
+                        echo "Binary installation successful"
+                        # Copy to shared volume
+                        mkdir -p /shared/bin
+                        cp -r /tmp/aws-cli /shared/
+                        cp /tmp/aws-bin/aws /shared/bin/aws
+                        chmod +x /shared/bin/aws
+                        
+                        # Test the binary
+                        if /shared/bin/aws --version; then
+                          echo "✅ AWS CLI binary installation successful!"
+                          exit 0
+                        else
+                          echo "❌ Binary doesn't work, falling back to pip"
+                        fi
+                      else
+                        echo "Binary installation failed, falling back to pip"
+                      fi
+                    fi
                     
-                    echo "Step 4: Copy to shared volume"
+                    # Step 5: Fallback to pip installation
+                    echo "Using pip fallback installation..."
+                    pip3 install awscli
+                    
+                    # Copy pip-installed AWS CLI to shared volume
                     mkdir -p /shared/bin
-                    cp /tmp/aws-bin/aws /shared/bin/aws
+                    cp $(which aws) /shared/bin/aws
                     chmod +x /shared/bin/aws
                     
-                    echo "Step 5: Verify installation in shared volume"
-                    ls -la /shared/bin/aws
-                    /shared/bin/aws --version
-                    
-                    echo "=== INIT CONTAINER: AWS CLI installation complete ==="
+                    # Verify pip installation
+                    if /shared/bin/aws --version; then
+                      echo "✅ AWS CLI pip installation successful!"
+                    else
+                      echo "❌ Both binary and pip installation failed"
+                      exit 1
+                    fi
                 volumeMounts:
                   - name: shared-tools
                     mountPath: /shared
             
+            # Main container uses custom image + shared tools
             containers:
               - name: container-0
                 image: alpine:latest  # Customer's custom image would go here
@@ -93,6 +143,7 @@ steps:
                   - name: PATH
                     value: "/usr/local/bin:/usr/bin:/bin"
             
+            # Shared volume for tools
             volumes:
               - name: shared-tools
                 emptyDir: {}
