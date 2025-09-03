@@ -1,34 +1,54 @@
 # Demo: Installing AWS CLI at runtime without modifying base image
-# This addresses the customer question about plugin dependencies
+# PROPERLY testing the init container -> main container flow
 
 steps:
-  - label: "🔧 Demo: Working Init Container Example"
+  - label: "🔧 Demo: Init Container -> Main Container Verification"
     command: |
-      echo "--- 🏗️ Verifying AWS CLI is available"
-      if command -v aws >/dev/null 2>&1; then
-        echo "✅ AWS CLI found!"
-        aws --version
+      echo "--- 📋 Step 1: Check what init container provided"
+      echo "Contents of shared volume mount point (/usr/local):"
+      ls -la /usr/local/ || echo "❌ /usr/local not found"
+      
+      echo "Contents of /usr/local/bin (where init container should have installed AWS CLI):"
+      ls -la /usr/local/bin/ || echo "❌ /usr/local/bin not found"
+      
+      echo "--- 📋 Step 2: Check if AWS CLI is in PATH"
+      echo "Current PATH: $PATH"
+      which aws || echo "❌ aws not found in PATH"
+      
+      echo "--- 📋 Step 3: Try to execute AWS CLI"
+      if [ -f "/usr/local/bin/aws" ]; then
+        echo "✅ AWS CLI file found in shared volume!"
+        echo "File details:"
+        ls -la /usr/local/bin/aws
         
-        echo "--- 🧪 Testing AWS CLI functionality"
-        aws help | head -5
+        echo "--- 🧪 Testing AWS CLI execution"
+        /usr/local/bin/aws --version || echo "❌ AWS CLI execution failed"
         
-        echo "--- ✅ Success: Custom image + runtime dependencies working!"
+        echo "--- 🧪 Testing via PATH"
+        aws --version || echo "❌ AWS CLI not working via PATH"
+        
       else
-        echo "❌ AWS CLI not found"
-        echo "Checking what's in shared volume:"
-        ls -la /usr/local/bin/ || echo "No /usr/local/bin"
-        echo "Current PATH: $PATH"
+        echo "❌ AWS CLI not found in expected location /usr/local/bin/aws"
+        echo "Let's check what the init container actually created:"
+        find /usr/local -name "*aws*" -type f 2>/dev/null || echo "No AWS-related files found"
       fi
       
-      echo "--- 📦 Container info"
-      echo "Base image: alpine:latest (Customer would use their custom image here)"
-      echo "Dependencies: Installed via init container"
+      echo "--- 📊 Container Environment"
+      echo "Container image: $(cat /etc/os-release | grep PRETTY_NAME || echo 'Unknown')"
+      echo "Available disk space:"
+      df -h /usr/local || echo "Cannot check disk space"
+      
+      echo "--- 📝 Summary"
+      if command -v aws >/dev/null 2>&1; then
+        echo "✅ SUCCESS: AWS CLI is available in main container via init container installation!"
+      else
+        echo "❌ FAILED: AWS CLI not accessible (but we can see why and fix it)"
+      fi
     agents:
       queue: "kubernetes"
     plugins:
       - kubernetes:
           podSpec:
-            # Simplified init container that should work
             initContainers:
               - name: install-aws-cli
                 image: alpine:latest
@@ -36,44 +56,70 @@ steps:
                 args:
                   - -c
                   - |
-                    echo "Installing AWS CLI..."
+                    set -x  # Enable debug output
+                    echo "=== INIT CONTAINER: Installing AWS CLI ==="
+                    
+                    echo "Step 1: Update package manager"
                     apk update
+                    
+                    echo "Step 2: Install Python and pip"
                     apk add --no-cache python3 py3-pip
+                    
+                    echo "Step 3: Install AWS CLI via pip"
                     pip3 install awscli
+                    
+                    echo "Step 4: Find where AWS CLI was installed"
+                    which aws
+                    ls -la $(which aws)
+                    
+                    echo "Step 5: Create shared directory and copy AWS CLI"
                     mkdir -p /shared/bin
-                    cp /usr/bin/aws /shared/bin/
-                    echo "AWS CLI installed successfully"
+                    cp $(which aws) /shared/bin/aws
+                    chmod +x /shared/bin/aws
+                    
+                    echo "Step 6: Verify copy was successful"
                     ls -la /shared/bin/
+                    /shared/bin/aws --version
+                    
+                    echo "=== INIT CONTAINER: Installation complete ==="
                 volumeMounts:
                   - name: shared-tools
                     mountPath: /shared
             
             containers:
               - name: container-0
-                image: alpine:latest
+                image: alpine:latest  # Customer would use their custom image
                 volumeMounts:
                   - name: shared-tools
                     mountPath: /usr/local
                 env:
                   - name: PATH
-                    value: "/usr/local/bin:/usr/bin:/bin:/usr/local/bin"
+                    value: "/usr/local/bin:/usr/bin:/bin"
             
             volumes:
               - name: shared-tools
                 emptyDir: {}
 
-  - label: "🔄 Demo: Alternative Working Approach"
+  - label: "🔄 Demo: What Customer Gets vs Simple Approach"
     command: |
-      echo "--- 📦 Comparison: Using AWS CLI image directly"
-      echo "This works but customer wants to avoid modifying their base image"
+      echo "--- 🆚 Comparison: Init Container vs Direct Image"
+      
+      echo "Current approach (what customer wants):"
+      echo "• Base image: $(cat /etc/os-release | grep PRETTY_NAME || echo 'alpine:latest')"
+      echo "• AWS CLI: amazon/aws-cli:latest (has AWS CLI built-in)"
+      echo "• Result: Works immediately but uses AWS CLI image"
       
       aws --version
-      echo "✅ This approach works immediately"
       
-      echo "--- 💡 Why customer needs init container approach:"
-      echo "• They have existing custom base image with their tools"
-      echo "• Don't want to rebuild/maintain modified images"
-      echo "• Want to add dependencies at runtime"
+      echo "--- 💡 Customer's constraint:"
+      echo "❌ Can't use this because they have existing custom base image"
+      echo "✅ Need init container approach to keep their custom image"
+      
+      echo "--- 🎯 Customer Solution:"
+      echo "• Keep their custom base image: mycompany/build-image:latest"
+      echo "• Add init container to install AWS CLI at runtime"
+      echo "• Share via volume mount"
+      echo "• Cache plugin gets AWS CLI without image changes"
     agents:
       queue: "kubernetes"
     plugins:
@@ -83,28 +129,33 @@ steps:
               - name: container-0
                 image: amazon/aws-cli:latest
 
-  - label: "📝 Customer Solution Summary"
+  - label: "📝 Customer Implementation Guide"
     command: |
-      echo "--- 🎯 Solving Customer's Requirements"
+      echo "--- 🛠️ For Customer's Real Implementation"
       echo ""
-      echo "Customer Question:"
-      echo "\"How to install plugin dependencies (AWS CLI) without baking into image?\""
+      echo "Replace this pipeline code:"
       echo ""
-      echo "✅ SOLUTION: Init Container Pattern"
-      echo "• Init container: Install dependencies to shared volume"
-      echo "• Main container: Use customer's base image + mount shared volume"
-      echo "• Result: Dependencies available without image modification"
+      echo "OLD (what they can't do):"
+      echo "  image: mycompany/build-image:latest  # Missing AWS CLI"
       echo ""
-      echo "🔧 Implementation Notes:"
-      echo "• Replace alpine:latest with customer's actual base image"
-      echo "• Customize init container for their specific dependencies"
-      echo "• Works with any plugins (cache, deploy, etc.)"
-      echo "• Kubernetes-native approach"
+      echo "NEW (what they should do):"
+      echo "  plugins:"
+      echo "    - kubernetes:"
+      echo "        podSpec:"
+      echo "          initContainers:"
+      echo "            - name: install-aws-cli"
+      echo "              # Install AWS CLI to /shared/bin/"
+      echo "          containers:"
+      echo "            - name: container-0"
+      echo "              image: mycompany/build-image:latest  # Their custom image"
+      echo "              volumeMounts:"
+      echo "                - name: shared-tools"
+      echo "                  mountPath: /usr/local"
       echo ""
-      echo "📊 This addresses their constraints:"
-      echo "• ✅ No image modification"
-      echo "• ✅ Runtime dependency installation" 
-      echo "• ✅ Plugin execution order independent"
-      echo "• ✅ Works with vendored plugins"
+      echo "Result: Their custom image + AWS CLI available for cache plugin!"
+      echo ""
+      echo "✅ Addresses original question:"
+      echo "'How to install plugin dependencies without baking into image?'"
+      echo "Answer: Init containers with shared volumes!"
     agents:
       queue: "kubernetes"
