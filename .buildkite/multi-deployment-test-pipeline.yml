@@ -1,218 +1,167 @@
+# Demo: Installing AWS CLI at runtime without modifying base image
+# This addresses the customer question about plugin dependencies
+
 steps:
-  # Test 1: Elastic CI Stack - Setup kubeconfig and upload as artifact
-  - label: "🔧 Setup EKS Access - Updated Plugin"
-    key: "setup-eks"
-    agents:
-      queue: default
+  - label: "🔧 Demo: Init Container + Custom Image"
     command: |
-      # Configure kubectl for EKS cluster using IAM role authentication
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-      echo "✅ Kubeconfig configured for EKS cluster"
+      echo "--- 🏗️ Verifying AWS CLI is available"
+      which aws
+      aws --version
       
-      # Upload kubeconfig from buildkite-agent home directory
-      buildkite-agent artifact upload "/var/lib/buildkite-agent/.kube/config"
-
-  # Test 1: Elastic CI Stack - Deploy with plugin
-  - label: "☁️ Elastic CI Stack - Deploy"
-    key: "elastic-deploy"
-    depends_on: "setup-eks"
+      echo "--- 📦 This container uses a custom image but has AWS CLI from init container"
+      echo "Base image: alpine:latest (lightweight, no AWS CLI built-in)"
+      echo "AWS CLI: installed by init container into shared volume"
+      
+      echo "--- 🧪 Testing AWS CLI functionality"
+      # This would normally interact with AWS services
+      # For demo purposes, just show it's working
+      aws help | head -10
+      
+      echo "--- ✅ Success: Custom image + runtime dependencies"
     agents:
-      queue: default
-    plugins:
-      - artifacts#v1.9.0:
-          download: "*"
-          destination: "."
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-          mode: deploy
-          release: elastic-helm-test
-          chart: oci://registry-1.docker.io/bitnamicharts/nginx
-          namespace: elastic-test
-          kubeconfig: "./var/lib/buildkite-agent/.kube/config"
-          set:
-            - service.type=ClusterIP
-          timeout: 100s
-          wait: true
-          atomic: true
-          create_namespace: true
-
-  # Test 2: Kubernetes Agent
-  - label: "🚀 Kubernetes Agent - Deploy"
-    key: "k8s-deploy"
-    agents:
-      queue: kubernetes
+      queue: "kubernetes"
     plugins:
       - kubernetes:
-          podSpecPatch:
+          podSpec:
+            # Init container installs AWS CLI into shared volume
+            initContainers:
+              - name: install-aws-cli
+                image: amazonlinux:latest
+                command: ["/bin/bash", "-c"]
+                args:
+                  - |
+                    echo "🚀 Installing AWS CLI in init container..."
+                    
+                    # Install AWS CLI v2
+                    yum update -y
+                    yum install -y curl unzip
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip awscliv2.zip
+                    
+                    # Install to shared volume location
+                    ./aws/install --install-dir /shared/aws-cli --bin-dir /shared/bin
+                    
+                    echo "✅ AWS CLI installed to shared volume"
+                    ls -la /shared/bin/
+                volumeMounts:
+                  - name: shared-tools
+                    mountPath: /shared
+            
+            # Main container uses custom image + shared tools
             containers:
-            - name: container-0
-              image: dtzar/helm-kubectl:latest
-            serviceAccountName: deployer-manager
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-          mode: deploy
-          release: k8s-helm-test
-          chart: oci://registry-1.docker.io/bitnamicharts/nginx
-          namespace: k8s-test
-          set:
-            - service.type=ClusterIP
-          timeout: 100s
-          wait: true
-          atomic: true
-          create_namespace: true
+              - name: container-0
+                image: alpine:latest  # Customer's custom image would go here
+                volumeMounts:
+                  - name: shared-tools
+                    mountPath: /usr/local
+                env:
+                  - name: PATH
+                    value: "/usr/local/bin:/usr/bin:/bin"
+            
+            # Shared volume for tools
+            volumes:
+              - name: shared-tools
+                emptyDir: {}
 
-  # Test 3: Mac Agent
-  - env:
-      KUBECONFIG: "./.kube/config"
-    key: "mac-deploy"
-    label: "🍎 Mac Agent - Deploy"
-    agents:
-      queue: mac
+  - label: "🔄 Demo: Cache Plugin with AWS CLI"
     command: |
-      # Configure kubectl for EKS cluster using AWS credentials
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+      echo "--- 📦 Demonstrating cache plugin scenario"
+      echo "This step shows how plugins can use AWS CLI installed by init container"
+      
+      echo "AWS CLI version for cache plugin:"
+      aws --version
+      
+      echo "--- 🗂️ Simulating cache plugin behavior"
+      # This is what a cache plugin would do:
+      # 1. Check if cache exists in S3
+      # 2. Download if exists, or upload after build
+      echo "Cache plugin would use: aws s3 cp s3://my-cache-bucket/cache.tar.gz ."
+      echo "✅ Cache plugin can successfully use AWS CLI"
+    agents:
+      queue: "kubernetes"
     plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-          mode: deploy
-          release: mac-helm-test
-          chart: oci://registry-1.docker.io/bitnamicharts/nginx
-          namespace: mac-test
-          set:
-            - service.type=ClusterIP
-          timeout: 100s
-          wait: true
-          atomic: true
-          create_namespace: true
+      - kubernetes:
+          podSpec:
+            initContainers:
+              - name: install-aws-cli
+                image: amazonlinux:latest
+                command: ["/bin/bash", "-c"]
+                args:
+                  - |
+                    yum update -y && yum install -y curl unzip
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip awscliv2.zip
+                    ./aws/install --install-dir /shared/aws-cli --bin-dir /shared/bin
+                volumeMounts:
+                  - name: shared-tools
+                    mountPath: /shared
+            containers:
+              - name: container-0
+                image: alpine:latest  # Customer's build image
+                volumeMounts:
+                  - name: shared-tools
+                    mountPath: /usr/local
+                env:
+                  - name: PATH
+                    value: "/usr/local/bin:/usr/bin:/bin"
+            volumes:
+              - name: shared-tools
+                emptyDir: {}
 
-  # Test 4: Linux Agent
-  - env:
-      KUBECONFIG: "/mnt/mac/Users/olabuildkite/.kube/config"
-    key: "linux-deploy"
-    label: "🐧 Linux Agent - Deploy"
-    agents:
-      queue: linux
+  - wait: ~
+
+  - label: "🆚 Comparison: Different Approaches"
     command: |
-      # Configure kubectl for EKS cluster using AWS credentials
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-    plugins:
-      - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-          mode: deploy
-          release: linux-helm-test
-          chart: oci://registry-1.docker.io/bitnamicharts/nginx
-          namespace: linux-test
-          set:
-            - service.type=ClusterIP
-          timeout: 100s
-          wait: true
-          atomic: true
-          create_namespace: true
-
-  # Manual approval gate before rollbacks
-  - block: "🛑 Approve Rollback Testing"
-    key: "approve-rollbacks"
-    depends_on: 
-      - "elastic-deploy"
-      - "k8s-deploy"
-      - "mac-deploy"
-      - "linux-deploy"
-    prompt: "Ready to proceed with rollback testing? This will rollback all deployments to previous versions."
-
-  # Rollback Tests Group
-  - group: "🔄 Rollback Tests"
-    key: "rollback-group"
-    depends_on: "approve-rollbacks"
-    steps:
-      # Test 5: Rollback Elastic CI Stack Deployment
-      - label: "🔄 Rollback Elastic CI Stack"
-        key: "rollback-elastic"
-        agents:
-          queue: default
-        command: |
-          echo "🔄 Testing plugin rollback for Elastic CI Stack deployment..."
-        plugins:
-          - artifacts#v1.9.0:
-              download: "*"
-              destination: "."
-          - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-              mode: rollback
-              release: elastic-helm-test
-              namespace: elastic-test
-              kubeconfig: "./var/lib/buildkite-agent/.kube/config"
-
-      # Test 6: Rollback Kubernetes Agent Deployment  
-      - label: "🔄 Rollback Kubernetes Agent"
-        key: "rollback-k8s"
-        agents:
-          queue: kubernetes
-        plugins:
-          - kubernetes:
-              podSpecPatch:
-                containers:
-                - name: container-0
-                  image: dtzar/helm-kubectl:latest
-                serviceAccountName: deployer-manager
-          - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-              mode: rollback
-              release: k8s-helm-test
-              namespace: k8s-test
-        command: |
-          echo "🔄 Testing plugin rollback for Kubernetes agent deployment..."
-
-      # Test 7: Rollback Mac Agent Deployment
-      - label: "🔄 Rollback Mac Agent"
-        key: "rollback-mac"
-        env:
-          KUBECONFIG: "./.kube/config"
-        agents:
-          queue: mac
-        command: |
-          # Configure kubectl for EKS cluster using AWS credentials
-          aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-          echo "🔄 Testing plugin rollback for Mac agent deployment..."
-        plugins:
-          - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-              mode: rollback
-              release: mac-helm-test
-              namespace: mac-test
-
-      # Test 8: Rollback Linux Agent Deployment
-      - label: "🔄 Rollback Linux Agent"
-        key: "rollback-linux"
-        env:
-          KUBECONFIG: "/mnt/mac/Users/olabuildkite/.kube/config"
-        agents:
-          queue: linux
-        command: |
-          # Configure kubectl for EKS cluster using AWS credentials
-          aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-          echo "🔄 Testing plugin rollback for Linux agent deployment..."
-        plugins:
-          - https://github.com/mykematt/deployment-helm-chart-buildkite-plugin.git#fa7493a:
-              mode: rollback
-              release: linux-helm-test
-              namespace: linux-test
-
-  # Cleanup Step
-  - label: "🧹 Cleanup All Test Deployments"
-    key: "cleanup-all"
-    depends_on: "rollback-group"
+      echo "--- 📊 Customer's Options Summary"
+      echo ""
+      echo "❌ REJECTED: Modify base image"
+      echo "   • Customer doesn't want to 'bake deps into the image'"
+      echo "   • Would require rebuilding/maintaining custom images"
+      echo ""
+      echo "❌ ALTERNATIVE: Use AWS CLI image per step"
+      echo "   • Would work: podSpecPatch with amazon/aws-cli:latest"
+      echo "   • Problem: Customer likely has custom base image they want to keep"
+      echo ""
+      echo "✅ RECOMMENDED: Init container approach"
+      echo "   • Keep existing custom base image"
+      echo "   • Install dependencies at runtime via init container"
+      echo "   • Share tools via volume mount"
+      echo "   • Works across multiple steps if needed"
+      echo ""
+      echo "🎯 This solves the customer's specific constraints:"
+      echo "   • No image modification required"
+      echo "   • Dependencies available for plugins"
+      echo "   • Works with vendored/non-vendored plugin execution order"
+      echo "   • Kubernetes-native approach"
     agents:
-      queue: "default"
+      queue: "kubernetes"
+
+  - label: "📝 Implementation Notes"
     command: |
-      # Configure kubectl for EKS
-      aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
-      
-      echo "🧹 Cleaning up all test deployments..."
-      
-      # Cleanup all test releases
-      helm uninstall elastic-helm-test -n elastic-test || echo "elastic-helm-test already removed"
-      helm uninstall k8s-helm-test -n k8s-test || echo "k8s-helm-test already removed"
-      helm uninstall mac-helm-test -n mac-test || echo "mac-helm-test already removed"
-      helm uninstall linux-helm-test -n linux-test || echo "linux-helm-test already removed"
-      
-      # Delete namespaces
-      kubectl delete namespace elastic-test || echo "elastic-test namespace already removed"
-      kubectl delete namespace k8s-test || echo "k8s-test namespace already removed"
-      kubectl delete namespace mac-test || echo "mac-test namespace already removed"
-      kubectl delete namespace linux-test || echo "linux-test namespace already removed"
-      
-      echo "✅ Cleanup complete!"
-      echo "🎯 Multi-agent Helm plugin testing completed successfully!"
+      echo "--- 🛠️ For Customer Implementation"
+      echo ""
+      echo "Key points to customize:"
+      echo ""
+      echo "1. Replace 'alpine:latest' with their actual base image"
+      echo "   containers:"
+      echo "     - name: container-0"
+      echo "       image: mycompany/build-image:latest"
+      echo ""
+      echo "2. Customize the init container installation"
+      echo "   - Add any other tools they need"
+      echo "   - Optimize for their package manager"
+      echo "   - Consider caching strategies"
+      echo ""
+      echo "3. Volume mount paths"
+      echo "   - Adjust /usr/local mount point if conflicts"
+      echo "   - Update PATH environment variable accordingly"
+      echo ""
+      echo "4. Plugin compatibility"
+      echo "   - Cache plugin will find AWS CLI in PATH"
+      echo "   - Works regardless of vendored plugin execution order"
+      echo "   - Dependencies available in job container context"
+      echo ""
+      echo "✅ This approach addresses their core question:"
+      echo "   'How to install plugin dependencies without baking into image'"
+    agents:
+      queue: "kubernetes"
