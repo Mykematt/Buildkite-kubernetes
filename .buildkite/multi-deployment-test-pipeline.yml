@@ -55,21 +55,28 @@ steps:
                 args:
                   - |
                     set -ex
-                    echo "🚀 Installing AWS CLI in init container (simplified)..."
+                    echo "🚀 Installing AWS CLI in init container (with dependencies)..."
                     
-                    # Install AWS CLI via pip (more reliable than binary)
+                    # Install AWS CLI via pip
                     apk add --no-cache curl unzip python3 py3-pip
                     pip3 install awscli
                     
-                    # Set up shared directory
-                    mkdir -p /shared/bin
+                    echo "Copying complete Python installation to shared volume..."
                     
-                    # Copy AWS CLI binary to shared volume
-                    cp $(which aws) /shared/bin/aws
-                    chmod +x /shared/bin/aws
+                    # Copy the entire /usr/local directory (includes Python packages)
+                    cp -r /usr/local/* /shared/
                     
-                    echo "AWS CLI installed successfully"
+                    # Also copy Python interpreter if needed
+                    mkdir -p /shared/python/bin
+                    cp /usr/bin/python3 /shared/python/bin/python3 || true
+                    
+                    # Verify AWS CLI works in the shared location
+                    echo "Testing AWS CLI in shared volume..."
+                    export PATH="/shared/bin:$PATH"
+                    export PYTHONPATH="/shared/lib/python3.9/site-packages:$PYTHONPATH"
+                    
                     /shared/bin/aws --version
+                    echo "✅ AWS CLI with dependencies copied successfully!"
                 volumeMounts:
                   - name: shared-tools
                     mountPath: /shared
@@ -77,13 +84,15 @@ steps:
             # Main container uses custom image + shared tools
             containers:
               - name: container-0
-                image: alpine:latest  # Customer's custom image would go here
+                image: python:3.9-alpine  # Changed to Python image for AWS CLI dependencies
                 volumeMounts:
                   - name: shared-tools
                     mountPath: /usr/local
                 env:
                   - name: PATH
                     value: "/usr/local/bin:/usr/bin:/bin"
+                  - name: PYTHONPATH
+                    value: "/usr/local/lib/python3.9/site-packages"
             
             # Shared volume for tools
             volumes:
