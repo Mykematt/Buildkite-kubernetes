@@ -1,185 +1,24 @@
-# Demo: Installing AWS CLI at runtime without modifying base image
-# This addresses the customer question about plugin dependencies
-
+# pipeline.yml
 steps:
-  - label: "🚀 WORKING: Init Container AWS CLI Demo"
-    command: |
-      echo "--- 🔍 Step 1: Verify init container completed successfully"
-      echo "Contents of shared volume (/usr/local):"
-      ls -la /usr/local/
-      
-      echo "Contents of /usr/local/bin/:"
-      ls -la /usr/local/bin/
-      
-      echo "--- 🧪 Step 2: Test AWS CLI availability"
-      echo "Current PATH: $PATH"
-      
-      if command -v aws > /dev/null 2>&1; then
-        echo "✅ SUCCESS: AWS CLI found in PATH!"
-        which aws
-        
-        echo "--- 📋 AWS CLI Details"
-        aws --version
-        
-        echo "--- 🎯 Testing plugin scenario"
-        echo "This is what the cache plugin would see:"
-        echo "$ aws s3 ls # (would list S3 buckets)"
-        echo "Cache plugin has AWS CLI available! ✅"
-        
-        echo "--- ✅ COMPLETE SUCCESS!"
-        echo "🎉 Init container approach works end-to-end!"
-        
-      else
-        echo "❌ AWS CLI still not found. Let's debug..."
-        echo "Checking what files are in shared volume:"
-        find /usr/local -type f -executable 2>/dev/null || echo "No executable files found"
-        
-        echo "Checking if AWS CLI was installed elsewhere:"
-        find /usr -name "aws" -type f 2>/dev/null || echo "No aws binary found in /usr"
-      fi
-      
-      echo "--- 📦 Container Environment"
-      echo "Base image: $(cat /etc/os-release | head -1)"
-      echo "Running as user: $(whoami)"
-      echo "Working directory: $(pwd)"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - kubernetes:
-          podSpec:
-            # Init container installs AWS CLI into shared volume
-            initContainers:
-              - name: install-aws-cli
-                image: python:3.9-alpine
-                command: ["/bin/sh", "-c"]
-                args:
-                  - |
-                    set -ex
-                    echo "🚀 Installing AWS CLI in init container (with dependencies)..."
-                    
-                    # Install AWS CLI via pip
-                    apk add --no-cache curl unzip python3 py3-pip
-                    pip3 install awscli
-                    
-                    echo "Copying complete Python installation to shared volume..."
-                    
-                    # Copy the entire /usr/local directory (includes Python packages)
-                    cp -r /usr/local/* /shared/
-                    
-                    # Also copy Python interpreter if needed
-                    mkdir -p /shared/python/bin
-                    cp /usr/bin/python3 /shared/python/bin/python3 || true
-                    
-                    # Verify AWS CLI works in the shared location
-                    echo "Testing AWS CLI in shared volume..."
-                    export PATH="/shared/bin:$PATH"
-                    export PYTHONPATH="/shared/lib/python3.9/site-packages:$PYTHONPATH"
-                    
-                    /shared/bin/aws --version
-                    echo "✅ AWS CLI with dependencies copied successfully!"
-                volumeMounts:
-                  - name: shared-tools
-                    mountPath: /shared
-            
-            # Main container uses custom image + shared tools
-            containers:
-              - name: container-0
-                image: python:3.9-alpine  # Changed to Python image for AWS CLI dependencies
-                volumeMounts:
-                  - name: shared-tools
-                    mountPath: /usr/local
-                env:
-                  - name: PATH
-                    value: "/usr/local/bin:/usr/bin:/bin"
-                  - name: PYTHONPATH
-                    value: "/usr/local/lib/python3.9/site-packages"
-            
-            # Shared volume for tools
-            volumes:
-              - name: shared-tools
-                emptyDir: {}
-
-  - label: "🎯 Customer Implementation Template"
-    command: |
-      echo "--- 📋 For Customer's Real Implementation"
-      echo ""
-      echo "Replace these parts in your pipeline:"
-      echo ""
-      echo "CURRENT (doesn't work):"
-      echo "  steps:"
-      echo "    - command: make build"
-      echo "      plugins:"
-      echo "        - cache#v1.0.0:"  
-      echo "            # Fails: AWS CLI not available"
-      echo ""
-      echo "NEW (working solution):"
-      echo "  steps:"
-      echo "    - command: make build" 
-      echo "      plugins:"
-      echo "        - cache#v1.0.0:"
-      echo "            # Success: AWS CLI available from init container"
-      echo "        - kubernetes:"
-      echo "            podSpec:"
-      echo "              initContainers:"
-      echo "                - name: install-aws-cli"
-      echo "                  # Install AWS CLI to shared volume"
-      echo "              containers:"
-      echo "                - name: container-0"
-      echo "                  image: mycompany/build-image:latest"
-      echo "                  volumeMounts:"
-      echo "                    - name: shared-tools"
-      echo "                      mountPath: /usr/local"
-      echo ""
-      echo "✅ Result:"
-      echo "• Keep existing custom base image ✅"
-      echo "• No 'baking deps into image' ✅"  
-      echo "• AWS CLI available for cache plugin ✅"
-      echo "• Works regardless of plugin execution order ✅"
-      echo "• Kubernetes-native solution ✅"
-      echo ""
-      echo "🎯 This directly answers their question:"
-      echo "\"How to install plugin dependencies without baking into image?\""
-      echo "Answer: Init containers with shared volumes!"
-    agents:
-      queue: "kubernetes"
-
-  - label: "📊 Demo Summary & Results"
-    command: |
-      echo "--- 🏆 Complete Solution Demonstration"
-      echo ""
-      echo "Customer's Original Problem:"
-      echo "• Need AWS CLI for cache plugin"
-      echo "• Don't want to modify base images" 
-      echo "• Using Kubernetes with vendored plugins"
-      echo "• Concerned about plugin execution order"
-      echo ""
-      echo "✅ Our Solution Addresses Everything:"
-      echo ""
-      echo "1. ARCHITECTURE ✅"
-      echo "   • Init container installs dependencies"
-      echo "   • Shared volume makes them available"
-      echo "   • Main container uses customer's base image"
-      echo ""
-      echo "2. CONSTRAINTS SATISFIED ✅"
-      echo "   • No base image modification"
-      echo "   • Runtime dependency installation"  
-      echo "   • Plugin execution order independent"
-      echo "   • Works with vendored plugins"
-      echo ""
-      echo "3. TECHNICAL PROOF ✅"
-      echo "   • Kubernetes integration confirmed"
-      echo "   • Volume mounting works"
-      echo "   • PATH configuration correct"
-      echo "   • Cache plugin compatibility verified"
-      echo ""
-      echo "🚀 OUTCOME:"
-      echo "Customer has working solution for their exact use case!"
-      echo ""
-      echo "Next steps:"
-      echo "• Replace alpine:latest with their custom image"
-      echo "• Add any other required dependencies"  
-      echo "• Deploy to production"
-      echo ""
-      echo "✨ Mission accomplished! ✨"
-    agents:
-      queue: "kubernetes"
+- name: Hello from a container with more resources
+  command: echo Hello World!
+  plugins:
+  - kubernetes:
+      sidecars:
+      - name: nginx
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: 500m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+      podSpecPatch:
+        containers:
+        - name: container-0    # <-- Specify exactly as `container-0`.
+          resources:           #     Currently under experimentation to make this more ergonomic.
+            requests:
+              cpu: 1000m
+              memory: 50Mi
+            limits:
+              memory: 1Gi
