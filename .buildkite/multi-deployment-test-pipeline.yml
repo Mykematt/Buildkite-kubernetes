@@ -1,4 +1,6 @@
 # pipeline.yml
+agents:
+  queue: "kubernetes"
 steps:
 - name: Hello from a container with more resources
   command: echo Hello World!
