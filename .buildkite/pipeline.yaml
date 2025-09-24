@@ -1,5 +1,5 @@
 steps:
-  - label: "Deploy Nginx to Kubernetes (with checkout skip - should fail)"
+  - label: "Deploy Nginx to Kubernetes"
     commands:
       - echo "Deploying Nginx to Kubernetes"
       - echo "Current directory contents:"
@@ -13,8 +13,6 @@ steps:
       queue: kubernetes
     plugins:
       - kubernetes:
-          checkout:
-            skip: true  # This will cause the deployment to fail
           podSpec:
             serviceAccountName: deployer-manager
             containers:
