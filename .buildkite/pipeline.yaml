@@ -4,7 +4,7 @@ steps:
       - echo "Deploying Nginx to Kubernetes"
       - echo "Current directory contents:"
       - ls -la
-      - echo "Attempting to apply manifests (should fail):"
+      - echo "Attempting to apply manifests"
       - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/deployment.yaml
       - kubectl apply -f k8s/service.yaml
