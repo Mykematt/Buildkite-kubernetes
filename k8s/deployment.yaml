@@ -14,6 +14,7 @@ spec:
       labels:
         app: nginx
     spec:
+      serviceAccountName: buildkite-deployer
       containers:
       - name: nginx
         image: nginx:latest
