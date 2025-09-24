@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: buildkite-deployer
+  namespace: buildkite
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: buildkite
+  name: buildkite-deployer-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "services", "pods"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: buildkite-deployer-binding
+  namespace: buildkite
+subjects:
+- kind: ServiceAccount
+  name: buildkite-deployer
+  namespace: buildkite
+roleRef:
+  kind: Role
+  name: buildkite-deployer-role
+  apiGroup: rbac.authorization.k8s.io
