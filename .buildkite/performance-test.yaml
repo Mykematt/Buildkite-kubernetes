@@ -1,0 +1,42 @@
+steps:
+  - label: ":timer_clock: Git Clone Performance Test"
+    key: "perf-test"
+    commands:
+      - echo "=== Git Clone Performance Metrics ==="
+      - echo "Agent Version:" 
+      - buildkite-agent --version
+      - echo ""
+      - echo "Repository Size:"
+      - du -sh .git
+      - echo ""
+      - echo "Git Config:"
+      - git config --list | grep -E "(clone|fetch|mirror)" || echo "No special git config found"
+      - echo ""
+      - echo "Checking for git mirrors:"
+      - ls -la /buildkite/git-mirrors 2>/dev/null || echo "No git mirrors directory found"
+      - echo ""
+      - echo "=== Timing will be visible in job timeline ==="
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+            - image: bitnami/kubectl:latest
+
+  - wait
+
+  - label: ":chart_with_upwards_trend: Annotate Results"
+    commands:
+      - |
+        cat <<EOF | buildkite-agent annotate --style info --context perf-test
+        ## Git Clone Performance Test Results
+        
+        Check the job timeline above to see:
+        - **Preparing build folder** - Git clone/checkout time
+        - **Running commands** - Script execution time
+        
+        Agent version: \$(buildkite-agent --version)
+        EOF
+    agents:
+      queue: mac
