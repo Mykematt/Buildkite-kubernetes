@@ -26,4 +26,3 @@ steps:
             containers:
               - name: main
                 image: docker:latest
-                command: ["/bin/sh", "-e", "-c"]
