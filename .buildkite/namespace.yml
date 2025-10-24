@@ -1,0 +1,30 @@
+steps:
+  - label: ":docker: Build with Namespace Remote Builders"
+    agents:
+      queue: kubernetes
+    command: |
+      # Install Namespace CLI
+      curl -fsSL https://get.namespace.so/cloud/install.sh | sh
+      
+      # Get Buildkite OIDC token
+      OIDC_TOKEN=$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
+      
+      # Exchange for Namespace credentials
+      nsc auth exchange-oidc-token --token "$OIDC_TOKEN" --tenant_id tenant_uabmve166l99o
+      
+      # Configure Docker BuildX to use Namespace
+      nsc docker buildx setup --background --use
+      
+      # Build and push to Namespace registry
+      docker buildx build --builder nsc-remote \
+        -t nscr.io/uabmve166l99o/test-app:${BUILDKITE_BUILD_NUMBER} \
+        --push \
+        .
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - name: main
+                image: docker:cli
+                command: ["sh", "-c"]
+                args: ["sleep infinity"]
