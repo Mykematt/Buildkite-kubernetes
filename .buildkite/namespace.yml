@@ -41,7 +41,7 @@ steps:
                     mkdir -p /usr/local/bin
                     cat > /usr/local/bin/bash << 'EOF'
                     #!/bin/sh
-                    exec /bin/bash -c "$@"
+                    exec /bin/sh -c "$@"
                     EOF
                     chmod +x /usr/local/bin/bash
                 volumeMounts:
