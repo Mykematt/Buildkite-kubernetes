@@ -3,6 +3,9 @@ steps:
     agents:
       queue: kubernetes
     command: |
+      # Install bash first
+      apk add --no-cache bash
+      
       # Install Namespace CLI
       curl -fsSL https://get.namespace.so/cloud/install.sh | sh
       
@@ -22,11 +25,7 @@ steps:
         .
     plugins:
       - kubernetes:
-          commandParams:
-            interposer: vector
           podSpec:
             containers:
               - name: main
                 image: docker:latest
-                command: ['sh']
-                args: ['-c']
