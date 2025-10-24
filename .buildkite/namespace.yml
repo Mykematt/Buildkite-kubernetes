@@ -40,7 +40,11 @@ steps:
                 args:
                   - |
                     mkdir -p /usr/local/bin
-                    ln -sf /bin/bash /usr/local/bin/bash
+                    cat > /usr/local/bin/bash << 'EOF'
+                    #!/bin/sh
+                    exec /bin/bash -c "$@"
+                    EOF
+                    chmod +x /usr/local/bin/bash
                 volumeMounts:
                   - name: usr-local-bin
                     mountPath: /usr/local/bin
