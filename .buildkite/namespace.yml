@@ -33,6 +33,23 @@ steps:
     plugins:
       - kubernetes:
           podSpec:
+            initContainers:
+              - name: setup-bash
+                image: ubuntu:22.04
+                command: ["/bin/sh", "-c"]
+                args:
+                  - |
+                    mkdir -p /usr/local/bin
+                    ln -sf /bin/bash /usr/local/bin/bash
+                volumeMounts:
+                  - name: usr-local-bin
+                    mountPath: /usr/local/bin
             containers:
               - name: main
                 image: ubuntu:22.04
+                volumeMounts:
+                  - name: usr-local-bin
+                    mountPath: /usr/local/bin
+            volumes:
+              - name: usr-local-bin
+                emptyDir: {}
