@@ -26,5 +26,3 @@ steps:
             containers:
               - name: main
                 image: docker:cli
-                command: ["sh", "-c"]
-                args: ["sleep infinity"]
