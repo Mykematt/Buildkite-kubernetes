@@ -16,6 +16,15 @@ steps:
       # Install Namespace CLI
       curl -fsSL https://get.namespace.so/cloud/install.sh | sh
       
+      # Add nsc to PATH
+      export PATH="/root/.ns/bin:$PATH"
+      
+      # Verify installations
+      which docker
+      which nsc
+      docker --version
+      nsc --version
+      
       # Get Buildkite OIDC token
       OIDC_TOKEN=$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
       
