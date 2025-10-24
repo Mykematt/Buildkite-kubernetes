@@ -25,4 +25,5 @@ steps:
           podSpec:
             containers:
               - name: main
-                image: docker:cli
+                image: docker:latest
+                command: ["/bin/sh", "-e", "-c"]
