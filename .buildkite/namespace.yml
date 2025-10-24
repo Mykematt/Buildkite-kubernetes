@@ -22,7 +22,11 @@ steps:
         .
     plugins:
       - kubernetes:
+          commandParams:
+            interposer: vector
           podSpec:
             containers:
               - name: main
                 image: docker:latest
+                command: ['sh']
+                args: ['-c']
