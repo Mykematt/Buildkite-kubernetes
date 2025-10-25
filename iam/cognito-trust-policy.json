@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::097340723131:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/74EB93AF5462D3FE4971ED8AB7FCBC23"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-east-1.amazonaws.com/id/74EB93AF5462D3FE4971ED8AB7FCBC23:sub": "system:serviceaccount:buildkite:agent-stack-k8s",
+          "oidc.eks.us-east-1.amazonaws.com/id/74EB93AF5462D3FE4971ED8AB7FCBC23:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}

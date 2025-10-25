@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cognito-identity:GetId",
+        "cognito-identity:GetOpenIdToken"
+      ],
+      "Resource": "arn:aws:cognito-identity:us-east-1:097340723131:identitypool/us-east-1:217947c4-e20e-4315-97f8-08e9a14c8dfb"
+    }
+  ]
+}

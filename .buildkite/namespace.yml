@@ -6,20 +6,13 @@ steps:
     command: |
       set -euo pipefail
       
-      echo "=== Step 1: Authenticate with Namespace using OIDC ==="
+      echo "=== Step 1: Authenticate with Namespace using AWS Cognito ==="
       
-      # Request OIDC token from Buildkite
-      echo "Requesting OIDC token with audience: federation.namespaceapis.com"
-      OIDC_TOKEN=$$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
-      echo "✓ OIDC token obtained from Buildkite"
-      
-      # Debug: Show token info (first 50 chars only for security)
-      echo "Token preview: $${OIDC_TOKEN:0:50}..."
-      
-      # Exchange OIDC token for Namespace credentials
-      echo "Exchanging token for workspace: tenant_uabmve166l99o"
-      /root/.ns/bin/nsc auth exchange-oidc-token \
-        --token "$$OIDC_TOKEN" \
+      # Exchange AWS credentials for Namespace token via Cognito
+      echo "Authenticating via AWS Cognito Identity Pool..."
+      /root/.ns/bin/nsc auth exchange-aws-cognito-token \
+        --aws_region us-east-1 \
+        --identity_pool 217947c4-e20e-4315-97f8-08e9a14c8dfb \
         --tenant_id tenant_uabmve166l99o
       echo "✓ Authenticated with Namespace workspace"
       
