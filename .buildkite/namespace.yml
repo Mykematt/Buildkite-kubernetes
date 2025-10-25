@@ -1,36 +1,12 @@
 steps:
-  - label: ":docker: Build with Namespace"
+  - label: ":docker: Test Basic Setup"
     agents:
       queue: kubernetes
-      
     command: |
-      set -euo pipefail
-      
-      echo "=== Verifying installations ==="
+      echo "Docker version:"
       docker --version
+      echo "Buildx version:"
       docker buildx version
-      ls -la /root/.ns/bin/nsc
-      buildkite-agent --version
-      which bash
-      
-      echo "=== Starting Namespace build ==="
-      
-      # Get Buildkite OIDC token
-      OIDC_TOKEN=$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
-      echo "OIDC token obtained"
-      
-      # Exchange for Namespace credentials
-      nsc auth exchange-oidc-token --token "$OIDC_TOKEN" --tenant_id tenant_uabmve166l99o
-      echo "Namespace credentials exchanged"
-      
-      # Configure Docker BuildX to use Namespace
-      nsc docker buildx setup --background --use
-      echo "Namespace buildx configured"
-      
-      # Build and push to Namespace registry
-      docker buildx build --builder nsc-remote \
-        -t nscr.io/uabmve166l99o/test-app:${BUILDKITE_BUILD_NUMBER} \
-        --push \
-        .
-      
-      echo "=== Build complete! ==="
+      echo "Namespace CLI:"
+      /root/.ns/bin/nsc --help | head -5
+      echo "Success!"
