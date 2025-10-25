@@ -23,6 +23,10 @@ steps:
       /root/.ns/bin/nsc docker buildx setup --background --use
       echo "✓ Namespace remote builder configured"
       
+      # Configure Docker to authenticate with Namespace registry
+      /root/.ns/bin/nsc docker login
+      echo "✓ Docker authenticated with Namespace registry"
+      
       # Verify builder is available
       echo ""
       echo "Available builders:"
