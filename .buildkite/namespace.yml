@@ -2,6 +2,7 @@ steps:
   - label: ":docker: Verify installations and build with Namespace"
     agents:
       queue: kubernetes
+      
     command: |
       echo "=== Verifying installations ==="
       echo "Docker version:"
