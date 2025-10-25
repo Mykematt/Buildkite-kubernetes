@@ -1,12 +1,64 @@
 steps:
-  - label: ":docker: Test Basic Setup"
+  - label: ":hammer: Build and Push with Namespace Remote Builders"
     agents:
       queue: kubernetes
+      
     command: |
+      set -euo pipefail
+      
+      echo "=== Step 1: Verify Tools ==="
       echo "Docker version:"
       docker --version
-      echo "Buildx version:"
+      
+      echo ""
+      echo "Docker Buildx version:"
       docker buildx version
-      echo "Namespace CLI:"
-      /root/.ns/bin/nsc --help | head -5
-      echo "Success!"
+      
+      echo ""
+      echo "Namespace CLI version:"
+      /root/.ns/bin/nsc version || echo "Version command not available"
+      
+      echo ""
+      echo "=== Step 2: Authenticate with Namespace using OIDC ==="
+      
+      # Request OIDC token from Buildkite
+      OIDC_TOKEN=$$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
+      echo "✓ OIDC token obtained from Buildkite"
+      
+      # Exchange OIDC token for Namespace credentials
+      /root/.ns/bin/nsc auth exchange-oidc-token \
+        --token "$$OIDC_TOKEN" \
+        --tenant_id tenant_uabmve166l99o
+      echo "✓ Namespace credentials exchanged successfully"
+      
+      echo ""
+      echo "=== Step 3: Configure Docker Buildx for Namespace ==="
+      
+      # Set up Namespace as a Docker Buildx builder
+      /root/.ns/bin/nsc docker buildx setup --background --use
+      echo "✓ Namespace buildx builder configured"
+      
+      # List available builders
+      docker buildx ls
+      
+      echo ""
+      echo "=== Step 4: Build Multi-Platform Image ==="
+      
+      # Build for both amd64 and arm64 using Namespace remote builders
+      docker buildx build \
+        --builder nsc-remote \
+        --platform linux/amd64,linux/arm64 \
+        -t nscr.io/uabmve166l99o/test-app:$${BUILDKITE_BUILD_NUMBER} \
+        -t nscr.io/uabmve166l99o/test-app:latest \
+        --push \
+        .
+      
+      echo ""
+      echo "=== Step 5: Verify Image Push ==="
+      echo "✓ Image pushed to: nscr.io/uabmve166l99o/test-app:$${BUILDKITE_BUILD_NUMBER}"
+      echo "✓ Image tagged as: nscr.io/uabmve166l99o/test-app:latest"
+      
+      echo ""
+      echo "=== Build Complete! ==="
+      echo "Multi-platform image built successfully using Namespace remote builders"
+      echo "Platforms: linux/amd64, linux/arm64"
