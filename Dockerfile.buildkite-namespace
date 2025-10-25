@@ -1,0 +1,28 @@
+# Use the official Buildkite agent Alpine K8s image as base
+FROM buildkite/agent:alpine-k8s
+
+# Switch to root to install packages
+USER root
+
+# Install bash, Docker CLI and buildx from Alpine repositories
+RUN apk add --no-cache \
+    bash \
+    docker-cli \
+    docker-cli-buildx \
+    curl
+
+# Create symlink for bash at the location agent-stack-k8s expects
+RUN ln -sf /bin/bash /usr/local/bin/bash
+
+# Install Namespace CLI
+RUN curl -fsSL https://get.namespace.so/cloud/install.sh | sh
+
+# Add nsc to PATH
+ENV PATH="/root/.ns/bin:$PATH"
+
+# Verify installations
+RUN docker --version && \
+    docker buildx version && \
+    test -f /root/.ns/bin/nsc && echo "nsc installed successfully"
+
+WORKDIR /workspace
