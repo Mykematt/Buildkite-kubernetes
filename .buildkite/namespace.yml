@@ -9,10 +9,15 @@ steps:
       echo "=== Step 1: Authenticate with Namespace using OIDC ==="
       
       # Request OIDC token from Buildkite
+      echo "Requesting OIDC token with audience: federation.namespaceapis.com"
       OIDC_TOKEN=$$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
       echo "✓ OIDC token obtained from Buildkite"
       
+      # Debug: Show token info (first 50 chars only for security)
+      echo "Token preview: $${OIDC_TOKEN:0:50}..."
+      
       # Exchange OIDC token for Namespace credentials
+      echo "Exchanging token for workspace: tenant_uabmve166l99o"
       /root/.ns/bin/nsc auth exchange-oidc-token \
         --token "$$OIDC_TOKEN" \
         --tenant_id tenant_uabmve166l99o
