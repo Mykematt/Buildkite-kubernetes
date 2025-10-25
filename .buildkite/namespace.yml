@@ -1,34 +1,18 @@
 steps:
-  - label: ":docker: Verify installations and build with Namespace"
+  - label: ":docker: Build with Namespace"
     agents:
       queue: kubernetes
       
     command: |
+      set -euo pipefail
+      
       echo "=== Verifying installations ==="
-      echo "Docker version:"
       docker --version
-      
-      echo ""
-      echo "Docker Buildx version:"
       docker buildx version
-      
-      echo ""
-      echo "Namespace CLI (nsc):"
       ls -la /root/.ns/bin/nsc
-      
-      echo ""
-      echo "Buildkite Agent:"
       buildkite-agent --version
-      
-      echo ""
-      echo "Bash location:"
       which bash
-      ls -la /usr/local/bin/bash || echo "No symlink at /usr/local/bin/bash"
       
-      echo ""
-      echo "=== All dependencies verified! ==="
-      
-      echo ""
       echo "=== Starting Namespace build ==="
       
       # Get Buildkite OIDC token
@@ -49,5 +33,4 @@ steps:
         --push \
         .
       
-      echo ""
       echo "=== Build complete! ==="
