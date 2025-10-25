@@ -1,12 +1,12 @@
 steps:
-  - label: ":hammer: Build and Push with Namespace Remote Builders"
+  - label: ":docker: E2E Test - Build Multi-Platform Image with Namespace"
     agents:
       queue: kubernetes
       
     command: |
       set -euo pipefail
       
-      echo "=== Authenticate with Namespace using OIDC ==="
+      echo "=== Step 1: Authenticate with Namespace using OIDC ==="
       
       # Request OIDC token from Buildkite
       OIDC_TOKEN=$$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
@@ -16,32 +16,47 @@ steps:
       /root/.ns/bin/nsc auth exchange-oidc-token \
         --token "$$OIDC_TOKEN" \
         --tenant_id tenant_uabmve166l99o
-      echo "✓ Namespace credentials exchanged successfully"
+      echo "✓ Authenticated with Namespace workspace"
       
       echo ""
-      echo "=== Configure Docker Buildx for Namespace ==="
+      echo "=== Step 2: Configure Docker Buildx for Namespace ==="
       
       # Set up Namespace as a Docker Buildx builder
       /root/.ns/bin/nsc docker buildx setup --background --use
-      echo "✓ Namespace buildx builder configured"
+      echo "✓ Namespace remote builder configured"
       
-      # List available builders
+      # Verify builder is available
+      echo ""
+      echo "Available builders:"
       docker buildx ls
       
       echo ""
-      echo "=== Build Multi-Platform Image ==="
+      echo "=== Step 3: Build with Namespace Remote Builders ==="
+      echo "Building: Dockerfile (helm-kubectl + AWS CLI)"
+      echo "Platforms: linux/amd64, linux/arm64"
+      echo "Registry: nscr.io/uabmve166l99o"
+      echo ""
       
-      # Build for both amd64 and arm64 using Namespace remote builders
+      # Build existing Dockerfile for both amd64 and arm64 using Namespace remote builders
       docker buildx build \
         --builder nsc-remote \
         --platform linux/amd64,linux/arm64 \
-        -t nscr.io/uabmve166l99o/test-app:$${BUILDKITE_BUILD_NUMBER} \
-        -t nscr.io/uabmve166l99o/test-app:latest \
+        -f Dockerfile \
+        -t nscr.io/uabmve166l99o/helm-kubectl-aws:$${BUILDKITE_BUILD_NUMBER} \
+        -t nscr.io/uabmve166l99o/helm-kubectl-aws:latest \
         --push \
         .
       
       echo ""
-      echo "✓ Image pushed to: nscr.io/uabmve166l99o/test-app:$${BUILDKITE_BUILD_NUMBER}"
-      echo "✓ Image tagged as: nscr.io/uabmve166l99o/test-app:latest"
+      echo "=== ✓ E2E Test Complete! ==="
       echo ""
-      echo "=== Build Complete! ==="
+      echo "✓ OIDC authentication successful"
+      echo "✓ Namespace remote builders configured"
+      echo "✓ Multi-platform build successful (amd64 + arm64)"
+      echo "✓ Image pushed to Namespace registry"
+      echo ""
+      echo "Images available at:"
+      echo "  • nscr.io/uabmve166l99o/helm-kubectl-aws:$${BUILDKITE_BUILD_NUMBER}"
+      echo "  • nscr.io/uabmve166l99o/helm-kubectl-aws:latest"
+      echo ""
+      echo "View build details: https://cloud.namespace.so/workspace/builds"

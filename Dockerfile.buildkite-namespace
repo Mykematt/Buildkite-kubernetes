@@ -11,9 +11,6 @@ RUN apk add --no-cache \
     docker-cli-buildx \
     curl
 
-# Create symlink for bash at the location agent-stack-k8s expects
-RUN ln -sf /bin/bash /usr/local/bin/bash
-
 # Install Namespace CLI
 RUN curl -fsSL https://get.namespace.so/cloud/install.sh | sh
 
