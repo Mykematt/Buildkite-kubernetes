@@ -1,63 +1,52 @@
 steps:
-  - label: ":docker: Build with Namespace Remote Builders"
+  - label: ":docker: Verify installations and build with Namespace"
     agents:
       queue: kubernetes
     command: |
-      # Set up PATH to include all necessary binaries
-      export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/root/.ns/bin:$PATH"
+      echo "=== Verifying installations ==="
+      echo "Docker version:"
+      docker --version
       
-      # Verify what's available
-      echo "=== Checking available commands ==="
-      which curl || echo "curl not found"
-      which docker || echo "docker not found"
-      which buildkite-agent || echo "buildkite-agent not found"
+      echo ""
+      echo "Docker Buildx version:"
+      docker buildx version
       
-      # Install Namespace CLI
-      curl -fsSL https://get.namespace.so/cloud/install.sh | sh
+      echo ""
+      echo "Namespace CLI (nsc):"
+      ls -la /root/.ns/bin/nsc
       
-      # Verify installations after nsc install
-      echo "=== After nsc installation ==="
-      which nsc || echo "nsc not found"
-      which docker || echo "docker not found"
+      echo ""
+      echo "Buildkite Agent:"
+      buildkite-agent --version
+      
+      echo ""
+      echo "Bash location:"
+      which bash
+      ls -la /usr/local/bin/bash || echo "No symlink at /usr/local/bin/bash"
+      
+      echo ""
+      echo "=== All dependencies verified! ==="
+      
+      echo ""
+      echo "=== Starting Namespace build ==="
       
       # Get Buildkite OIDC token
       OIDC_TOKEN=$(buildkite-agent oidc request-token --audience federation.namespaceapis.com)
+      echo "OIDC token obtained"
       
       # Exchange for Namespace credentials
-      /root/.ns/bin/nsc auth exchange-oidc-token --token "$OIDC_TOKEN" --tenant_id tenant_uabmve166l99o
+      nsc auth exchange-oidc-token --token "$OIDC_TOKEN" --tenant_id tenant_uabmve166l99o
+      echo "Namespace credentials exchanged"
       
       # Configure Docker BuildX to use Namespace
-      /root/.ns/bin/nsc docker buildx setup --background --use
+      nsc docker buildx setup --background --use
+      echo "Namespace buildx configured"
       
       # Build and push to Namespace registry
       docker buildx build --builder nsc-remote \
         -t nscr.io/uabmve166l99o/test-app:${BUILDKITE_BUILD_NUMBER} \
         --push \
         .
-    plugins:
-      - kubernetes:
-          podSpec:
-            initContainers:
-              - name: setup-bash
-                image: docker:latest
-                command: ["/bin/sh", "-c"]
-                args:
-                  - |
-                    mkdir -p /usr/local/bin
-                    cat > /usr/local/bin/bash << 'EOF'
-                    #!/bin/sh
-                    exec /bin/sh -c "$@"
-                    EOF
-                    chmod +x /usr/local/bin/bash
-                volumeMounts:
-                  - name: usr-local-bin
-                    mountPath: /usr/local/bin
-            containers:
-              - name: main
-                image: docker:latest
-                volumeMounts:
-                  - name: usr-local-bin
-                    mountPath: /usr/local/bin
-            volumes:
-              - name: usr-local-bin
-                emptyDir: {}
+      
+      echo ""
+      echo "=== Build complete! ==="
