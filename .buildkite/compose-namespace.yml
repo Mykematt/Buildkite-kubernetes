@@ -17,7 +17,7 @@ steps:
       - echo "--- Login to Namespace registry"
       - /root/.ns/bin/nsc docker login
     plugins:
-      - git@github.com:buildkite-plugins/docker-compose-buildkite-plugin.git#c563463:
+      - docker-compose#c563463:
           build: app          # service name from your docker-compose.yml
           builder:
             name: nsc-remote  # this triggers docker compose ... --builder nsc-remote
