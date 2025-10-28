@@ -8,8 +8,6 @@ steps:
     command: |
       set -euo pipefail
       docker build -t "namespace-app:latest" .
-      echo "--- Docker config after build (before plugin post-command)"
-      cat ~/.docker/config.json
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
