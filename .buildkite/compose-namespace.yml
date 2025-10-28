@@ -16,9 +16,9 @@ steps:
             name: nsc-remote  # this triggers docker compose ... --builder nsc-remote
             setup: |
               /root/.ns/bin/nsc auth exchange-aws-cognito-token \
-                --aws_region "$NS_AWS_REGION" \
-                --identity_pool "$NS_IDENTITY_POOL" \
-                --tenant_id "$NS_TENANT_ID"
+                --aws_region "$$NS_AWS_REGION" \
+                --identity_pool "$$NS_IDENTITY_POOL" \
+                --tenant_id "$$NS_TENANT_ID"
               /root/.ns/bin/nsc docker login
               /root/.ns/bin/nsc docker buildx setup --background --use
           config: docker-compose.yml
