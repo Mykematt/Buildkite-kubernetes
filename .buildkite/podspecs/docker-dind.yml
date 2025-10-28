@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsUser: 0
+  volumes:
+    - name: dind-storage
+      emptyDir: {}
+  containers:
+    - name: docker
+      image: docker:25.0.4-dind
+      securityContext:
+        privileged: true
+      args:
+        - --storage-driver=overlay2
+      env:
+        - name: DOCKER_TLS_CERTDIR
+          value: ""
+      volumeMounts:
+        - name: dind-storage
+          mountPath: /var/lib/docker
+    - name: buildkite-agent
+      image: buildkite/agent:latest
+      env:
+        - name: BUILDKITE_AGENT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: buildkite-agent-token
+              key: token
+        - name: DOCKER_HOST
+          value: tcp://localhost:2375
+      volumeMounts:
+        - name: dind-storage
+          mountPath: /var/lib/docker
