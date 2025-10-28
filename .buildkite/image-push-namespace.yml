@@ -5,10 +5,9 @@ steps:
     env:
       NS_IMAGE_NAME: "namespace-app"
       NS_IMAGE_TAG: "latest"
+      PATH: "/home/olabuildkite/.ns/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     command: |
       set -euo pipefail
-      export PATH="/home/olabuildkite/.ns/bin:$PATH"
-      nsc credential-helper install --force
       docker build -t "namespace-app:latest" .
       docker images namespace-app:latest
     plugins:
