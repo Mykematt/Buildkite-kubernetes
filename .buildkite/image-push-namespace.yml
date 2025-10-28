@@ -7,13 +7,19 @@ steps:
       NS_IMAGE_TAG: "latest"
     commands:
       - set -euo pipefail
+      - echo "--- :docker: Docker version"
+      - docker --version
+      - docker info
+      - echo "--- :docker: Before build - list all images"
+      - docker images
       - echo "--- :docker: Build image locally"
       - docker build -t "namespace-app:latest" .
-      - echo "--- :docker: Verify image exists"
+      - echo "--- :docker: After build - list all images"
       - docker images
-      - docker images | grep namespace-app || echo "Image not found!"
-      - echo "--- :docker: Image info"
-      - docker inspect namespace-app:latest || echo "Cannot inspect image"
+      - echo "--- :docker: Specifically look for our image"
+      - docker images namespace-app:latest
+      - echo "--- :docker: Inspect the image"
+      - docker inspect namespace-app:latest
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
