@@ -2,10 +2,6 @@ steps:
   - label: ":docker: Build & Push via Namespace"
     agents:
       queue: linux
-    env:
-      NS_IMAGE_NAME: "namespace-app"
-      NS_IMAGE_TAG: "latest"
-      PATH: "/home/olabuildkite/.ns/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     command: |
       set -euo pipefail
       docker build -t "namespace-app:latest" .
