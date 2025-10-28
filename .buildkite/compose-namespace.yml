@@ -8,21 +8,19 @@ steps:
       NS_IDENTITY_POOL: "217947c4-e20e-4315-97f8-08e9a14c8dfb"
       # Optional: DOCKER_USERNAME/DOCKER_PASSWORD if you also want docker-login plugin
     commands:
-      - set -euo pipefail
-      - echo "--- Authenticate with Namespace (Cognito example)"
-      - /root/.ns/bin/nsc auth exchange-aws-cognito-token \
-          --aws_region "$NS_AWS_REGION" \
-          --identity_pool "$NS_IDENTITY_POOL" \
-          --tenant_id "$NS_TENANT_ID"
-      - echo "--- Login to Namespace registry"
-      - /root/.ns/bin/nsc docker login
-      - echo "--- Configure Namespace Buildx builder"
-      - /root/.ns/bin/nsc docker buildx setup --background --use
+      - echo ":docker: Namespace compose build complete"
     plugins:
-      - docker-compose#c563463:
+      - docker-compose#b3a508e:
           build: namespace-app
           builder:
             name: nsc-remote  # this triggers docker compose ... --builder nsc-remote
+            setup: |
+              /root/.ns/bin/nsc auth exchange-aws-cognito-token \
+                --aws_region "$NS_AWS_REGION" \
+                --identity_pool "$NS_IDENTITY_POOL" \
+                --tenant_id "$NS_TENANT_ID"
+              /root/.ns/bin/nsc docker login
+              /root/.ns/bin/nsc docker buildx setup --background --use
           config: docker-compose.yml
           push:
             - namespace-app
