@@ -16,7 +16,7 @@ steps:
           image: "namespace-app"
           tag: "latest"
           namespace:
-            tenant-id: "tenant_uabmve166l99o"
+            tenant-id: "uabmve166l99o"
             nsc-binary: "/home/olabuildkite/.ns/bin/nsc"
             auth-method: aws-cognito
             aws-cognito:
