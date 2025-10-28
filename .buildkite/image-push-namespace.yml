@@ -14,11 +14,11 @@ steps:
           image: "nscr.io/${NS_TENANT_ID}/${NS_IMAGE_NAME}"
           tag: "${NS_IMAGE_TAG}"
           namespace:
-            tenant-id: "${NS_TENANT_ID}"
+            tenant-id: "$${NS_TENANT_ID}"
             auth-method: aws-cognito
             aws-cognito:
-              region: "${NS_AWS_REGION}"
-              identity-pool: "${NS_IDENTITY_POOL}"
+              region: "$${NS_AWS_REGION}"
+              identity-pool: "$${NS_IDENTITY_POOL}"
     commands:
       - set -euo pipefail
       - echo "--- :docker: Building image locally"
