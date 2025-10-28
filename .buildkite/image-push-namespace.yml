@@ -4,16 +4,16 @@ steps:
       queue: linux
     env:
       NS_IMAGE_NAME: "namespace-app"
-      NS_IMAGE_TAG: "${BUILDKITE_BUILD_NUMBER}"
+      NS_IMAGE_TAG: "latest"
     commands:
       - set -euo pipefail
       - echo "--- :docker: Build image locally"
-      - docker build -t "namespace-app:${NS_IMAGE_TAG}" .
+      - docker build -t "namespace-app:latest" .
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
           image: "namespace-app"
-          tag: "${NS_IMAGE_TAG}"
+          tag: "latest"
           namespace:
             tenant-id: "tenant_uabmve166l99o"
             nsc-binary: "/home/olabuildkite/.ns/bin/nsc"
