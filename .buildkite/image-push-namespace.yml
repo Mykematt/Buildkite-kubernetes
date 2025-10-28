@@ -7,7 +7,10 @@ steps:
       NS_IMAGE_TAG: "latest"
     command: |
       set -euo pipefail
+      export PATH="/home/olabuildkite/.ns/bin:$PATH"
+      nsc credential-helper install --force
       docker build -t "namespace-app:latest" .
+      docker images namespace-app:latest
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
