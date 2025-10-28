@@ -2,10 +2,18 @@ steps:
   - label: ":docker: Build & Push via Namespace"
     agents:
       queue: linux
+    env:
+      NS_IMAGE_NAME: "namespace-app"
+      NS_IMAGE_TAG: "latest"
     commands:
       - set -euo pipefail
       - echo "--- :docker: Build image locally"
       - docker build -t "namespace-app:latest" .
+      - echo "--- :docker: Verify image exists"
+      - docker images
+      - docker images | grep namespace-app || echo "Image not found!"
+      - echo "--- :docker: Image info"
+      - docker inspect namespace-app:latest || echo "Cannot inspect image"
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
