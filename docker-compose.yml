@@ -14,7 +14,7 @@ services:
         apk add --no-cache aws-cli
         
         # Configure kubectl for EKS cluster
-        aws eks update-kubeconfig --region us-east-1 --name ola-bk-test
+        aws eks update-kubeconfig --region us-east-1 --name ola-test
         
         # Verify tools are available
         echo '✅ Verifying tools...'
