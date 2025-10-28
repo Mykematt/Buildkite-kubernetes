@@ -1,0 +1,25 @@
+steps:
+  - label: ":docker: Build & Push via Namespace"
+    agents:
+      queue: kubernetes
+    env:
+      NS_TENANT_ID: "tenant_uabmve166l99o"
+      NS_AWS_REGION: "us-east-1"
+      NS_IDENTITY_POOL: "217947c4-e20e-4315-97f8-08e9a14c8dfb"
+      NS_IMAGE_NAME: "namespace-app"
+      NS_IMAGE_TAG: "${BUILDKITE_BUILD_NUMBER}"
+    plugins:
+      - docker-image-push#54d3d9e:
+          provider: namespace
+          image: "nscr.io/${NS_TENANT_ID}/${NS_IMAGE_NAME}"
+          tag: "${NS_IMAGE_TAG}"
+          namespace:
+            tenant-id: "${NS_TENANT_ID}"
+            auth-method: aws-cognito
+            aws-cognito:
+              region: "${NS_AWS_REGION}"
+              identity-pool: "${NS_IDENTITY_POOL}"
+    commands:
+      - set -euo pipefail
+      - echo "--- :docker: Building image locally"
+      - docker build -t "nscr.io/${NS_TENANT_ID}/${NS_IMAGE_NAME}:${NS_IMAGE_TAG}" .
