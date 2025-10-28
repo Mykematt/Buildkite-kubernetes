@@ -18,9 +18,9 @@ steps:
       - /root/.ns/bin/nsc docker login
     plugins:
       - docker-compose#c563463:
-          build: app          # service name from your docker-compose.yml
+          build: namespace-app
           builder:
             name: nsc-remote  # this triggers docker compose ... --builder nsc-remote
           config: docker-compose.yml
           push:
-            - app
+            - namespace-app
