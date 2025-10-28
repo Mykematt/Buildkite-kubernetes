@@ -7,7 +7,7 @@ steps:
       docker build -t "namespace-app:latest" .
       docker images namespace-app:latest
     plugins:
-      - docker-image-push#54d3d9e:
+      - docker-image-push#3fa11f7:
           provider: namespace
           image: "namespace-app"
           tag: "latest"
