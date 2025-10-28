@@ -1,7 +1,7 @@
 steps:
   - label: ":docker: Build & Push via Namespace"
     agents:
-      queue: mac
+      queue: linux
     env:
       NS_IMAGE_NAME: "namespace-app"
       NS_IMAGE_TAG: "${BUILDKITE_BUILD_NUMBER}"
