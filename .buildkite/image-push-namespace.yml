@@ -13,7 +13,7 @@ steps:
       - docker-image-push#54d3d9e:
           provider: namespace
           image: "namespace-app"
-          tag: "$NS_IMAGE_TAG"
+          tag: "${NS_IMAGE_TAG}"
           namespace:
             tenant-id: "tenant_uabmve166l99o"
             nsc-binary: "/home/olabuildkite/.ns/bin/nsc"
