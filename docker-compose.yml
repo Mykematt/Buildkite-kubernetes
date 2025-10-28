@@ -24,3 +24,7 @@ services:
         
         echo '🚀 Docker Compose deployment completed'
       "
+  namespace-app:
+    build:
+      context: .
+    image: nscr.io/tenant_uabmve166l99o/namespace-app:latest

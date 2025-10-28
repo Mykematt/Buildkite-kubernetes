@@ -1,0 +1,26 @@
+steps:
+  - label: ":docker: Compose build via Namespace"
+    agents:
+      queue: kubernetes
+    env:
+      NS_TENANT_ID: "tenant_uabmve166l99o"
+      NS_AWS_REGION: "us-east-1"
+      NS_IDENTITY_POOL: "217947c4-e20e-4315-97f8-08e9a14c8dfb"
+      # Optional: DOCKER_USERNAME/DOCKER_PASSWORD if you also want docker-login plugin
+    commands:
+      - set -euo pipefail
+      - echo "--- Authenticate with Namespace (Cognito example)"
+      - /root/.ns/bin/nsc auth exchange-aws-cognito-token \
+          --aws_region "$NS_AWS_REGION" \
+          --identity_pool "$NS_IDENTITY_POOL" \
+          --tenant_id "$NS_TENANT_ID"
+      - echo "--- Login to Namespace registry"
+      - /root/.ns/bin/nsc docker login
+    plugins:
+      - git@github.com:buildkite-plugins/docker-compose-buildkite-plugin.git#c563463:
+          build: app          # service name from your docker-compose.yml
+          builder:
+            name: nsc-remote  # this triggers docker compose ... --builder nsc-remote
+          config: docker-compose.yml
+          push:
+            - app
