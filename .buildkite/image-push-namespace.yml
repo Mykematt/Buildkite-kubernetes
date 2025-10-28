@@ -5,21 +5,9 @@ steps:
     env:
       NS_IMAGE_NAME: "namespace-app"
       NS_IMAGE_TAG: "latest"
-    commands:
-      - set -euo pipefail
-      - echo "--- :docker: Docker version"
-      - docker --version
-      - docker info
-      - echo "--- :docker: Before build - list all images"
-      - docker images
-      - echo "--- :docker: Build image locally"
-      - docker build -t "namespace-app:latest" .
-      - echo "--- :docker: After build - list all images"
-      - docker images
-      - echo "--- :docker: Specifically look for our image"
-      - docker images namespace-app:latest
-      - echo "--- :docker: Inspect the image"
-      - docker inspect namespace-app:latest
+    command: |
+      set -euo pipefail
+      docker build -t "namespace-app:latest" .
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
