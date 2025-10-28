@@ -1,29 +1,19 @@
 steps:
   - label: ":docker: Build & Push via Namespace"
     agents:
-      queue: kubernetes
+      queue: mac
     env:
       NS_IMAGE_NAME: "namespace-app"
       NS_IMAGE_TAG: "${BUILDKITE_BUILD_NUMBER}"
-    agent_query_rules:
-      - pod-spec=podspecs/docker-dind.yml
     commands:
       - set -euo pipefail
-      - echo "--- :namespace: Authenticate with Namespace"
-      - /root/.ns/bin/nsc auth exchange-aws-cognito-token \
-          --aws_region us-east-1 \
-          --identity_pool 217947c4-e20e-4315-97f8-08e9a14c8dfb \
-          --tenant_id tenant_uabmve166l99o
-      - echo "--- :namespace: Configure Namespace builder"
-      - /root/.ns/bin/nsc docker buildx setup --background --use
-      - /root/.ns/bin/nsc docker login
-      - echo "--- :docker: Local build (DinD)"
+      - echo "--- :docker: Build image locally"
       - docker build -t "namespace-app:${NS_IMAGE_TAG}" .
     plugins:
       - docker-image-push#54d3d9e:
           provider: namespace
-          image: "nscr.io/tenant_uabmve166l99o/namespace-app"
-          tag: "${NS_IMAGE_TAG}"
+          image: "namespace-app"
+          tag: "$${NS_IMAGE_TAG}"
           namespace:
             tenant-id: "tenant_uabmve166l99o"
             auth-method: aws-cognito
