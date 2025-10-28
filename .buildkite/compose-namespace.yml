@@ -16,6 +16,8 @@ steps:
           --tenant_id "$NS_TENANT_ID"
       - echo "--- Login to Namespace registry"
       - /root/.ns/bin/nsc docker login
+      - echo "--- Configure Namespace Buildx builder"
+      - /root/.ns/bin/nsc docker buildx setup --background --use
     plugins:
       - docker-compose#c563463:
           build: namespace-app
