@@ -10,7 +10,7 @@ steps:
         echo "This is a pull request build"
         
         # Skip builds where the PR source branch is 'performance-test'
-        if [[ "\$BUILDKITE_BRANCH" == "performance-test" ]]; then
+        if [[ "\$BUILDKITE_BRANCH" =~ -test$ ]]; then
           echo "PR source branch is 'performance-test' - skipping build"
           cat <<EOF | buildkite-agent pipeline upload
       steps:
