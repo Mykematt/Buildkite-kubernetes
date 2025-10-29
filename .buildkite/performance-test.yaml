@@ -1,1 +1,49 @@
-steps
+steps:
+  - label: ":pipeline: Dynamic pipeline upload"
+    command: |
+      echo "PR Base Branch: \$BUILDKITE_PULL_REQUEST_BASE_BRANCH"
+      echo "Current Branch: \$BUILDKITE_BRANCH"
+      echo "PR Number: \$BUILDKITE_PULL_REQUEST"
+      
+      # Check if this is a PR and if the source branch matches the pattern we want to skip
+      if [[ "\$BUILDKITE_PULL_REQUEST" != "false" ]]; then
+        echo "This is a pull request build"
+        
+        # Skip builds where the PR source branch is 'performance-test'
+        if [[ "\$BUILDKITE_BRANCH" =~ -test$ ]]; then
+          echo "PR source branch is 'performance-test' - skipping build"
+          cat <<EOF | buildkite-agent pipeline upload
+      steps:
+        - block: ":no_entry: Build Skipped"
+          prompt: "PRs from 'performance-test' branch are skipped"
+      EOF
+        else
+          echo "PR source branch is '\$BUILDKITE_BRANCH' - proceeding with build"
+          cat <<EOF | buildkite-agent pipeline upload
+      steps:
+        - label: ":hammer: Build"
+          command: |
+            echo "Running build for PR from \$BUILDKITE_BRANCH targeting \$BUILDKITE_PULL_REQUEST_BASE_BRANCH"
+            # Your actual build commands here
+            
+        - label: ":test_tube: Test"
+          command: |
+            echo "Running tests"
+            # Your actual test commands here
+      EOF
+        fi
+      else
+        echo "This is not a PR build - proceeding normally"
+        cat <<EOF | buildkite-agent pipeline upload
+      steps:
+        - label: ":hammer: Build"
+          command: |
+            echo "Running build for branch \$BUILDKITE_BRANCH"
+            # Your actual build commands here
+            
+        - label: ":test_tube: Test"
+          command: |
+            echo "Running tests"
+            # Your actual test commands here
+      EOF
+      fi
