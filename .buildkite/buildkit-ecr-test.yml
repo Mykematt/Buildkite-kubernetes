@@ -78,12 +78,6 @@ steps:
       
       echo "✓ ECR authentication configured for $${ECR_REGISTRY}"
       
-      # Ensure ECR repository exists
-      echo ""
-      echo "--- Ensuring ECR repository exists"
-      aws ecr describe-repositories --repository-names buildkit-ecr-test --region $${AWS_REGION} 2>/dev/null || \
-        aws ecr create-repository --repository-name buildkit-ecr-test --region $${AWS_REGION}
-      
       echo ""
       echo "--- Building with BuildKit (daemonless)"
       
