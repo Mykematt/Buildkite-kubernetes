@@ -21,8 +21,8 @@ steps:
           podSpec:
             serviceAccountName: agent-stack-k8s
             containers:
-              - image: moby/buildkit:latest
-                name: buildkit
+              - name: container-0
+                image: moby/buildkit:latest
                 securityContext:
                   privileged: true
                 volumeMounts:
