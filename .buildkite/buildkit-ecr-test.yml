@@ -1,0 +1,125 @@
+# ============================================================================
+# BuildKit + ECR Authentication Test
+# ============================================================================
+# This pipeline tests BuildKit container builds with ECR authentication
+# using the Agent Stack for Kubernetes.
+#
+# Approach: Use a custom image with AWS CLI + BuildKit, authenticate via
+# IRSA (IAM Roles for Service Accounts), then run BuildKit.
+# ============================================================================
+
+steps:
+  # --------------------------------------------------------------------------
+  # Option 1: Privileged BuildKit with ECR (using custom image with AWS CLI)
+  # --------------------------------------------------------------------------
+  - label: ":docker: BuildKit + ECR (Privileged)"
+    agents:
+      queue: kubernetes
+
+    plugins:
+      - kubernetes:
+          podSpec:
+            serviceAccountName: agent-stack-k8s
+            containers:
+              - image: moby/buildkit:latest
+                name: buildkit
+                securityContext:
+                  privileged: true
+                volumeMounts:
+                  - name: buildkit-cache
+                    mountPath: /var/lib/buildkit
+            volumes:
+              - name: buildkit-cache
+                emptyDir: {}
+
+    command: |
+      set -euo pipefail
+      
+      echo "=== BuildKit + ECR Authentication Test (Privileged) ==="
+      echo ""
+      
+      # Check if we have IRSA credentials
+      echo "--- Checking AWS credentials (IRSA)"
+      if [ -n "$${AWS_WEB_IDENTITY_TOKEN_FILE:-}" ]; then
+        echo "✓ IRSA token available at: $${AWS_WEB_IDENTITY_TOKEN_FILE}"
+        echo "  Role ARN: $${AWS_ROLE_ARN:-not set}"
+      else
+        echo "⚠ No IRSA credentials found"
+      fi
+      
+      # Install AWS CLI (BuildKit image is Alpine-based)
+      echo ""
+      echo "--- Installing AWS CLI"
+      apk add --no-cache aws-cli jq
+      
+      # Get ECR login token
+      echo ""
+      echo "--- Authenticating to ECR"
+      AWS_REGION=us-east-1
+      AWS_ACCOUNT=097340723131
+      
+      # Create docker config directory
+      mkdir -p ~/.docker
+      
+      # Get ECR auth token and create docker config
+      ECR_TOKEN=$$(aws ecr get-login-password --region $${AWS_REGION})
+      ECR_REGISTRY="$${AWS_ACCOUNT}.dkr.ecr.$${AWS_REGION}.amazonaws.com"
+      
+      # Create docker config.json for BuildKit
+      cat > ~/.docker/config.json <<EOF
+      {
+        "auths": {
+          "$${ECR_REGISTRY}": {
+            "auth": "$$(echo -n "AWS:$${ECR_TOKEN}" | base64 -w0)"
+          }
+        }
+      }
+      EOF
+      
+      echo "✓ ECR authentication configured for $${ECR_REGISTRY}"
+      
+      # Ensure ECR repository exists
+      echo ""
+      echo "--- Ensuring ECR repository exists"
+      aws ecr describe-repositories --repository-names buildkit-ecr-test --region $${AWS_REGION} 2>/dev/null || \
+        aws ecr create-repository --repository-name buildkit-ecr-test --region $${AWS_REGION}
+      
+      echo ""
+      echo "--- Building with BuildKit (daemonless)"
+      
+      # Build and push to ECR
+      buildctl-daemonless.sh build \
+        --frontend dockerfile.v0 \
+        --local context=. \
+        --local dockerfile=. \
+        --output type=image,name=$${ECR_REGISTRY}/buildkit-ecr-test:$${BUILDKITE_BUILD_NUMBER},push=true \
+        --progress=plain
+      
+      echo ""
+      echo "=== ✓ BuildKit + ECR Test Complete ==="
+      echo "Image pushed: $${ECR_REGISTRY}/buildkit-ecr-test:$${BUILDKITE_BUILD_NUMBER}"
+
+  # --------------------------------------------------------------------------
+  # Summary
+  # --------------------------------------------------------------------------
+  - wait
+
+  - label: ":memo: Summary"
+    command: |
+      echo "=============================================="
+      echo "BuildKit + ECR Authentication Test Results"
+      echo "=============================================="
+      echo ""
+      echo "This test verified:"
+      echo "  1. IRSA credentials available in pod"
+      echo "  2. AWS CLI can get ECR login token"
+      echo "  3. BuildKit can authenticate and push to ECR"
+      echo "  4. Privileged BuildKit works in Kubernetes"
+      echo "=============================================="
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest
