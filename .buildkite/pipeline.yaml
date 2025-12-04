@@ -1,18 +1,5 @@
 steps:
-  - label: "Deploy Nginx to Kubernetes"
-    commands:
-      - echo "Deploying Nginx to Kubernetes"
-      - echo "Current directory contents:"
-      - ls -la
-      - echo "Attempting to apply manifests"
-      - kubectl apply -f k8s/configmap.yaml
-      - kubectl apply -f k8s/deployment.yaml
-      - kubectl apply -f k8s/service.yaml
-      - kubectl rollout status deployment/nginx-deployment --timeout=300s
+  - label: ":arrow_up: Upload BuildKit + ECR Test"
+    command: "buildkite-agent pipeline upload .buildkite/buildkit-ecr-test.yml"
     agents:
-      queue: kubernetes
-    plugins:
-      - kubernetes:
-          podSpec:
-            containers:
-            - image: bitnami/kubectl:latest
+      queue: mac
