@@ -1,5 +1,5 @@
 steps:
-  - label: "Deploy Nginx to Kubernetes"
+  - label: "Deploy Nginx to K8s"
     commands:
       - echo "Deploying Nginx to Kubernetes"
       - echo "Current directory contents:"
