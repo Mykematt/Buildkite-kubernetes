@@ -1,17 +1,4 @@
 steps:
-  - label: ":test_tube: Test monorepo-diff retry + cache"
-    agents:
-      queue: kubernetes
-    plugins:
-      - Mykematt/monorepo-diff#Ola-retry-logic:
-          binary_cache_path: /workspace/monorepo-cache
-          diff: "git diff --name-only HEAD~1"
-          log_level: "debug"
-          watch:
-            - path: ".buildkite/"
-              config:
-                command: "ls -la /workspace/monorepo-cache/ && echo 'Binary cached at /workspace/monorepo-cache'"
-
   - label: ":arrow_up: Upload BuildKit + ECR Test"
     command: "buildkite-agent pipeline upload .buildkite/buildkit-ecr-test.yml"
     agents:
