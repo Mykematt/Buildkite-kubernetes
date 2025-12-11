@@ -3,7 +3,7 @@ steps:
     agents:
       queue: kubernetes
     plugins:
-      - Mykematt/monorepo-diff#Ola-retry-logic:
+      - buildkite-plugins/monorepo-diff-buildkite-plugin#v1.5.2:
           diff: "git diff --name-only HEAD~1"
           log_level: "debug"
           watch:
@@ -15,10 +15,8 @@ steps:
     agents:
       queue: kubernetes
     command: |
-      echo "=== Storage info ==="
       df -Th | grep -E "(plugins|workspace|Filesystem)"
       echo ""
-      echo "=== Plugin directories ==="
       find /workspace/plugins -maxdepth 2 -mindepth 2 2>/dev/null | head -20 || echo "No plugins found"
 
   - wait
@@ -27,7 +25,7 @@ steps:
     agents:
       queue: kubernetes
     plugins:
-      - Mykematt/monorepo-diff#Ola-retry-logic:
+      - buildkite-plugins/monorepo-diff-buildkite-plugin#v1.5.2:
           diff: "git diff --name-only HEAD~1"
           log_level: "debug"
           watch:
@@ -39,8 +37,6 @@ steps:
     agents:
       queue: kubernetes
     command: |
-      echo "=== Storage info ==="
       df -Th | grep -E "(plugins|workspace|Filesystem)"
       echo ""
-      echo "=== Plugin directories ==="
       find /workspace/plugins -maxdepth 2 -mindepth 2 2>/dev/null | head -20 || echo "No plugins found"
