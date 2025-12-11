@@ -3,7 +3,7 @@ steps:
     agents:
       queue: kubernetes
     plugins:
-      - buildkite-plugins/monorepo-diff-buildkite-plugin#v1.5.2:
+      - monorepo-diff#v1.5.2:
           diff: "git diff --name-only HEAD~1"
           log_level: "debug"
           watch:
@@ -25,7 +25,7 @@ steps:
     agents:
       queue: kubernetes
     plugins:
-      - buildkite-plugins/monorepo-diff-buildkite-plugin#v1.5.2:
+      - monorepo-diff#v1.5.2:
           diff: "git diff --name-only HEAD~1"
           log_level: "debug"
           watch:
