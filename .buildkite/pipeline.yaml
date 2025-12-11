@@ -4,7 +4,7 @@ steps:
       queue: kubernetes
     plugins:
       - Mykematt/monorepo-diff#Ola-retry-logic:
-          binary_cache_path: /tmp/monorepo-cache
+          binary_cache_path: /workspace/plugins/monorepo-cache
           diff: "git diff --name-only HEAD~1"
           log_level: "debug"
           watch:
