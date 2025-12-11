@@ -11,6 +11,16 @@ steps:
               config:
                 command: "echo 'Run 1 complete'"
 
+  - label: ":mag: Debug storage (after Run 1)"
+    agents:
+      queue: kubernetes
+    command: |
+      echo "=== Storage info ==="
+      df -Th | grep -E "(plugins|workspace|Filesystem)"
+      echo ""
+      echo "=== Plugin directories ==="
+      find /workspace/plugins -maxdepth 2 -mindepth 2 2>/dev/null | head -20 || echo "No plugins found"
+
   - wait
 
   - label: ":test_tube: monorepo-diff Run 2"
@@ -24,3 +34,13 @@ steps:
             - path: ".buildkite/"
               config:
                 command: "echo 'Run 2 complete'"
+
+  - label: ":mag: Debug storage (after Run 2)"
+    agents:
+      queue: kubernetes
+    command: |
+      echo "=== Storage info ==="
+      df -Th | grep -E "(plugins|workspace|Filesystem)"
+      echo ""
+      echo "=== Plugin directories ==="
+      find /workspace/plugins -maxdepth 2 -mindepth 2 2>/dev/null | head -20 || echo "No plugins found"
