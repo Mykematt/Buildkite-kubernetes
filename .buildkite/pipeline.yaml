@@ -1,4 +1,15 @@
 steps:
+  - label: ":test_tube: Test monorepo-diff retry + cache"
+    plugins:
+      - Mykematt/monorepo-diff#Ola-retry-logic:
+          binary_cache_path: /tmp/monorepo-cache
+          diff: "git diff --name-only HEAD~1"
+          log_level: "debug"
+          watch:
+            - path: ".buildkite/"
+              config:
+                command: "echo 'Changes detected in .buildkite/'"
+
   - label: ":arrow_up: Upload BuildKit + ECR Test"
     command: "buildkite-agent pipeline upload .buildkite/buildkit-ecr-test.yml"
     agents:
