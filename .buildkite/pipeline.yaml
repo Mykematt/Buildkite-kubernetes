@@ -1,4 +1,56 @@
 steps:
+  - label: ":test_tube: Test monorepo-diff cache (Run 1 - should download)"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpec:
+            volumes:
+              - name: binary-cache
+                hostPath:
+                  path: /var/cache/buildkite/monorepo-diff
+                  type: DirectoryOrCreate
+            containers:
+              - name: container-0
+                volumeMounts:
+                  - name: binary-cache
+                    mountPath: /cache/monorepo-diff
+      - Mykematt/monorepo-diff#Ola-retry-logic:
+          binary_cache_path: /cache/monorepo-diff
+          diff: "git diff --name-only HEAD~1"
+          log_level: "debug"
+          watch:
+            - path: ".buildkite/"
+              config:
+                command: "ls -la /cache/monorepo-diff/ && echo 'Run 1 complete'"
+
+  - wait
+
+  - label: ":test_tube: Test monorepo-diff cache (Run 2 - should skip download)"
+    agents:
+      queue: kubernetes
+    plugins:
+      - kubernetes:
+          podSpec:
+            volumes:
+              - name: binary-cache
+                hostPath:
+                  path: /var/cache/buildkite/monorepo-diff
+                  type: DirectoryOrCreate
+            containers:
+              - name: container-0
+                volumeMounts:
+                  - name: binary-cache
+                    mountPath: /cache/monorepo-diff
+      - Mykematt/monorepo-diff#Ola-retry-logic:
+          binary_cache_path: /cache/monorepo-diff
+          diff: "git diff --name-only HEAD~1"
+          log_level: "debug"
+          watch:
+            - path: ".buildkite/"
+              config:
+                command: "ls -la /cache/monorepo-diff/ && echo 'Run 2 - binary should be cached'"
+
   - label: ":arrow_up: Upload BuildKit + ECR Test"
     command: "buildkite-agent pipeline upload .buildkite/buildkit-ecr-test.yml"
     agents:
