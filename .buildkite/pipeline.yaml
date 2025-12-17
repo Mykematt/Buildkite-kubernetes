@@ -1,51 +1,30 @@
 steps:
-  - label: "Concurrent job 1"
+  - label: "First job - clone plugin"
     command: |
-      echo "Job 1 starting"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/"
-      echo "Checking shellcheck plugin:"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/" || echo "Not found yet"
+      echo "First job - plugin should be cloned"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/" || echo "Plugins dir empty"
     agents:
       queue: "kubernetes"
     plugins:
       - shellcheck#v1.3.0:
-          files: "**/*.sh"
+          files: "doesnotexist.sh"
     
-  - label: "Concurrent job 2"
+  - label: "Second job - reuse plugin"
     command: |
-      echo "Job 2 starting"
+      echo "Second job - plugin should be reused if same agent"
       ls -la "${BUILDKITE_PLUGINS_PATH}/"
-      echo "Checking shellcheck plugin:"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/" || echo "Not found yet"
     agents:
       queue: "kubernetes"
     plugins:
       - shellcheck#v1.3.0:
-          files: "**/*.sh"
-          
-  - label: "Concurrent job 3"
-    command: |
-      echo "Job 3 starting"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/"
-      echo "Checking shellcheck plugin:"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/" || echo "Not found yet"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - shellcheck#v1.3.0:
-          files: "**/*.sh"
+          files: "doesnotexist.sh"
 
-  - wait
-  
-  - label: "Verify plugin reuse"
+  - label: "Third job - reuse plugin"  
     command: |
-      echo "=== Testing Plugin Reuse ==="
-      echo "If plugin sharing works, the shellcheck plugin should already exist and NOT be cloned again"
-      echo ""
-      echo "Plugin directory:"
-      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/"
+      echo "Third job - plugin should be reused if same agent"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/"
     agents:
       queue: "kubernetes"
     plugins:
       - shellcheck#v1.3.0:
-          files: "**/*.sh"
+          files: "doesnotexist.sh"
