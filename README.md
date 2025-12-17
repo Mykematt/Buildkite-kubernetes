@@ -39,3 +39,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 # Test plugin sharing with custom agent
 # Testing plugin cache feature
 # Testing bash availability
+# Testing plugin sharing with correct env var
