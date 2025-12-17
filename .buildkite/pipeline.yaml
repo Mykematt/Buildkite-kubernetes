@@ -14,9 +14,8 @@ steps:
       echo "Checking for monorepo-diff plugin:"
       find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -name "*monorepo-diff*" -type d 2>/dev/null || echo "Not found"
       echo ""
-      echo "Creating test cache file..."
-      mkdir -p cache
-      echo "Job 1 was here at $(date)" > cache/test-file.txt
+      echo "Detailed plugin structure:"
+      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -type d -maxdepth 3 2>/dev/null | sort
     agents:
       queue: "kubernetes"
     plugins:
@@ -24,10 +23,6 @@ steps:
           checkout: true
           watch:
             - path: "packages/*"
-      - cache#v1.8.1:
-          path: "cache"
-          restore: pipeline
-          save: pipeline
   
   - label: ":two: Second Job - Verify Plugin Sharing"
     key: second-job
@@ -44,14 +39,8 @@ steps:
       echo "Checking for monorepo-diff plugin:"
       find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -name "*monorepo-diff*" -type d 2>/dev/null || echo "Not found"
       echo ""
-      echo "Checking cached file from job 1:"
-      if [ -f cache/test-file.txt ]; then
-        echo "✅ Cache file found!"
-        cat cache/test-file.txt
-        echo "Job 2 was here at $(date)" >> cache/test-file.txt
-      else
-        echo "❌ Cache file not found"
-      fi
+      echo "Detailed plugin structure:"
+      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -type d -maxdepth 3 2>/dev/null | sort
     agents:
       queue: "kubernetes"
     plugins:
@@ -59,10 +48,6 @@ steps:
           checkout: true
           watch:
             - path: "packages/*"
-      - cache#v1.8.1:
-          path: "cache"
-          restore: pipeline
-          save: pipeline
 
   - label: ":three: Third Job - Final Verification"
     key: third-job
@@ -73,19 +58,17 @@ steps:
       echo "Agent name: ${BUILDKITE_AGENT_NAME}"
       echo "Job ID: ${BUILDKITE_JOB_ID}"
       echo ""
+      echo "Summary: Checking if plugins are stored per-agent or shared"
+      echo ""
       echo "Plugin directories:"
       ls -la ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ 2>/dev/null || echo "No plugins directory found"
       echo ""
       echo "All plugin directories (checking if shared or per-agent):"
-      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -maxdepth 2 -type d 2>/dev/null | head -20
+      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -maxdepth 2 -type d 2>/dev/null | sort
       echo ""
-      echo "Checking cached file history:"
-      if [ -f cache/test-file.txt ]; then
-        echo "✅ Cache file found!"
-        cat cache/test-file.txt
-      else
-        echo "❌ Cache file not found"
-      fi
+      echo "If BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME is false, plugins should be"
+      echo "directly under /workspace/plugins/ without agent name subdirectories."
+      echo "If true, plugins should be under /workspace/plugins/\$AGENT_NAME/"
     agents:
       queue: "kubernetes"
     plugins:
@@ -93,7 +76,3 @@ steps:
           checkout: true
           watch:
             - path: "packages/*"
-      - cache#v1.8.1:
-          path: "cache"
-          restore: pipeline
-          save: pipeline
