@@ -21,9 +21,8 @@ steps:
           config: docker-compose.yml
       - cache#v1.8.1:
           path: "cache"
-          restore: true
-          save: true
-          level: "pipeline"
+          restore: pipeline
+          save: pipeline
   
   - label: ":two: Second Job - Should Reuse Binaries"
     key: second-job
@@ -49,9 +48,8 @@ steps:
           config: docker-compose.yml
       - cache#v1.8.1:
           path: "cache"
-          restore: true
-          save: true
-          level: "pipeline"
+          restore: pipeline
+          save: pipeline
 
   - label: ":three: Third Job - Verify Consistent Paths"
     key: third-job
