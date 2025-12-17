@@ -1,30 +1,61 @@
 steps:
-  - label: "First job - clone plugin"
+  - label: ":one: First job with monorepo-diff"
     command: |
-      echo "First job - plugin should be cloned"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/" || echo "Plugins dir empty"
+      echo "=== Job 1: Check plugin directory before running ==="
+      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/" || echo "Plugin dir empty"
+      echo ""
+      echo "=== After plugin runs, check for binary ==="
+      sleep 2
+      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/" || echo "Still empty"
     agents:
       queue: "kubernetes"
     plugins:
-      - shellcheck#v1.3.0:
-          files: "doesnotexist.sh"
-    
-  - label: "Second job - reuse plugin"
-    command: |
-      echo "Second job - plugin should be reused if same agent"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - shellcheck#v1.3.0:
-          files: "doesnotexist.sh"
+      - monorepo-diff#v1.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "nonexistent/"
+              config:
+                command: "echo 'would trigger'"
 
-  - label: "Third job - reuse plugin"  
+  - label: ":two: Second job with monorepo-diff"  
     command: |
-      echo "Third job - plugin should be reused if same agent"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/"
+      echo "=== Job 2: Check if binary was reused ==="
+      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/"
+      echo ""
+      echo "=== Check for binary file specifically ==="
+      if [ -f "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin" ]; then
+        echo "✅ Binary exists! Checking age..."
+        stat "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin"
+      else
+        echo "❌ Binary not found"
+      fi
     agents:
       queue: "kubernetes"
     plugins:
-      - shellcheck#v1.3.0:
-          files: "doesnotexist.sh"
+      - monorepo-diff#v1.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "nonexistent/"
+              config:
+                command: "echo 'would trigger'"
+
+  - label: ":three: Third job with monorepo-diff"
+    command: |
+      echo "=== Job 3: Final check for binary reuse ==="
+      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/"
+      echo ""
+      if [ -f "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin" ]; then
+        echo "✅ Binary still exists!"
+        echo "Binary size: $(ls -lh ${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin | awk '{print $5}')"
+      else
+        echo "❌ Binary not found"
+      fi
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - monorepo-diff#v1.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "nonexistent/"
+              config:
+                command: "echo 'would trigger'"
