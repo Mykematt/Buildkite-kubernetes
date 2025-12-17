@@ -1,12 +1,51 @@
 steps:
-  - label: "Plugin paths test"
+  - label: "Concurrent job 1"
     command: |
+      echo "Job 1 starting"
       ls -la "${BUILDKITE_PLUGINS_PATH}/"
-      find "${BUILDKITE_PLUGINS_PATH}" -maxdepth 1 -type d
+      echo "Checking shellcheck plugin:"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/" || echo "Not found yet"
     agents:
       queue: "kubernetes"
     plugins:
       - shellcheck#v1.3.0:
           files: "**/*.sh"
-      - artifacts#v1.9.4:
-          download: "*.log"
+    
+  - label: "Concurrent job 2"
+    command: |
+      echo "Job 2 starting"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/"
+      echo "Checking shellcheck plugin:"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/" || echo "Not found yet"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - shellcheck#v1.3.0:
+          files: "**/*.sh"
+          
+  - label: "Concurrent job 3"
+    command: |
+      echo "Job 3 starting"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/"
+      echo "Checking shellcheck plugin:"
+      ls -la "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/" || echo "Not found yet"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - shellcheck#v1.3.0:
+          files: "**/*.sh"
+
+  - wait
+  
+  - label: "Verify plugin reuse"
+    command: |
+      echo "=== Testing Plugin Reuse ==="
+      echo "If plugin sharing works, the shellcheck plugin should already exist and NOT be cloned again"
+      echo ""
+      echo "Plugin directory:"
+      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - shellcheck#v1.3.0:
+          files: "**/*.sh"
