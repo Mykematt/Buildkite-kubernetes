@@ -23,7 +23,7 @@ steps:
           path: "cache"
           restore: true
           save: true
-          level: ["true"]
+          level: "pipeline"
   
   - label: ":two: Second Job - Should Reuse Binaries"
     key: second-job
@@ -51,7 +51,7 @@ steps:
           path: "cache"
           restore: true
           save: true
-          level: [true]
+          level: "pipeline"
 
   - label: ":three: Third Job - Verify Consistent Paths"
     key: third-job
