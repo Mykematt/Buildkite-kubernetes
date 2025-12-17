@@ -1,78 +1,33 @@
 steps:
-  - label: ":one: First Job - Check Plugin Paths"
-    key: first-job
+  - label: ":mag: Check Agent Version and Config"
     command: |
-      echo "=== First job - checking plugin paths ==="
+      echo "=== Agent Information ===" 
+      echo "Agent version:"
+      buildkite-agent --version || echo "Could not get agent version"
+      echo ""
+      echo "=== Environment Variables Related to Plugins ===" 
+      env | grep -i plugin | sort || echo "No plugin-related env vars"
+      echo ""
+      echo "=== Plugin Path Structure ===" 
       echo "BUILDKITE_PLUGINS_PATH: ${BUILDKITE_PLUGINS_PATH:-not set}"
       echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME:-not set}"
+      echo "BUILDKITE_PLUGINS_LOCK_TIMEOUT: ${BUILDKITE_PLUGINS_LOCK_TIMEOUT:-not set}"
+      echo ""
       echo "Agent name: ${BUILDKITE_AGENT_NAME}"
       echo "Job ID: ${BUILDKITE_JOB_ID}"
       echo ""
-      echo "Plugin directories:"
-      ls -la ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ 2>/dev/null || echo "No plugins directory found"
-      echo ""
-      echo "Checking for monorepo-diff plugin:"
-      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -name "*monorepo-diff*" -type d 2>/dev/null || echo "Not found"
-      echo ""
-      echo "Detailed plugin structure:"
-      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -type d -maxdepth 3 2>/dev/null | sort
+      echo "=== Actual Plugin Directory Contents ===" 
+      if [ -d "${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}" ]; then
+        ls -la "${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/" | head -20
+        echo ""
+        echo "Looking for agent-name subdirectories:"
+        ls -d "${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}"/*/ 2>/dev/null | head -10
+      else
+        echo "Plugin directory does not exist yet"
+      fi
     agents:
       queue: "kubernetes"
     plugins:
       - monorepo-diff#v1.5.0:
-          checkout: true
-          watch:
-            - path: "packages/*"
-  
-  - label: ":two: Second Job - Verify Plugin Sharing"
-    key: second-job
-    command: |
-      echo "=== Second job - verifying plugin sharing ==="
-      echo "BUILDKITE_PLUGINS_PATH: ${BUILDKITE_PLUGINS_PATH:-not set}"
-      echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME:-not set}"
-      echo "Agent name: ${BUILDKITE_AGENT_NAME}"
-      echo "Job ID: ${BUILDKITE_JOB_ID}"
-      echo ""
-      echo "Plugin directories:"
-      ls -la ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ 2>/dev/null || echo "No plugins directory found"
-      echo ""
-      echo "Checking for monorepo-diff plugin:"
-      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -name "*monorepo-diff*" -type d 2>/dev/null || echo "Not found"
-      echo ""
-      echo "Detailed plugin structure:"
-      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -type d -maxdepth 3 2>/dev/null | sort
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - monorepo-diff#v1.5.0:
-          checkout: true
-          watch:
-            - path: "packages/*"
-
-  - label: ":three: Third Job - Final Verification"
-    key: third-job
-    command: |
-      echo "=== Third job - final verification ==="
-      echo "BUILDKITE_PLUGINS_PATH: ${BUILDKITE_PLUGINS_PATH:-not set}"
-      echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME:-not set}"
-      echo "Agent name: ${BUILDKITE_AGENT_NAME}"
-      echo "Job ID: ${BUILDKITE_JOB_ID}"
-      echo ""
-      echo "Summary: Checking if plugins are stored per-agent or shared"
-      echo ""
-      echo "Plugin directories:"
-      ls -la ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ 2>/dev/null || echo "No plugins directory found"
-      echo ""
-      echo "All plugin directories (checking if shared or per-agent):"
-      find ${BUILDKITE_PLUGINS_PATH:-/workspace/plugins}/ -maxdepth 2 -type d 2>/dev/null | sort
-      echo ""
-      echo "If BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME is false, plugins should be"
-      echo "directly under /workspace/plugins/ without agent name subdirectories."
-      echo "If true, plugins should be under /workspace/plugins/\$AGENT_NAME/"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - monorepo-diff#v1.5.0:
-          checkout: true
-          watch:
-            - path: "packages/*"
+          diff: "HEAD~1"
+          log_level: "debug"
