@@ -17,7 +17,7 @@ steps:
           watch:
             - path: "packages/*"
       - docker-compose#v5.12.1:
-          build: .
+          build: namespace-app
           config: docker-compose.yml
       - cache#v1.8.1:
           path: "cache"
@@ -44,7 +44,7 @@ steps:
           watch:
             - path: "packages/*"
       - docker-compose#v5.12.1:
-          build: .
+          build: namespace-app
           config: docker-compose.yml
       - cache#v1.8.1:
           path: "cache"
@@ -71,6 +71,6 @@ steps:
           watch:
             - path: "packages/*"
       - docker-compose#v5.12.1:
-          build: .
+          build: namespace-app
           config: docker-compose.yml
 
