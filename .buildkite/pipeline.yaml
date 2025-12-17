@@ -1,31 +1,61 @@
 steps:
-  - label: ":white_check_mark: Plugin Sharing Test - SUCCESS"
+  - label: ":white_check_mark: Plugin Sharing Verification"
     command: |
       echo "=== PLUGIN SHARING VERIFICATION ===" 
       echo ""
-      echo "✅ SUCCESS: Plugin sharing is working!"
-      echo ""
-      echo "Expected behavior:"
-      echo "  - Plugin path should NOT include agent name"
-      echo "  - Path format: /workspace/plugins/github-com-PLUGIN-NAME/"
-      echo ""
-      echo "=== Configuration ===" 
+      echo "✅ Plugin path verification:"
       echo "BUILDKITE_PLUGINS_PATH: ${BUILDKITE_PLUGINS_PATH}"
       echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME}"
       echo "Agent name: ${BUILDKITE_AGENT_NAME}"
       echo ""
       echo "=== Plugin Directory Structure ===" 
-      echo "Plugin directory contents:"
-      ls -la "${BUILDKITE_PLUGINS_PATH}/" 2>/dev/null || echo "No plugins directory yet"
+      if [ -d "${BUILDKITE_PLUGINS_PATH}" ]; then
+        echo "Plugin directory contents:"
+        ls -la "${BUILDKITE_PLUGINS_PATH}/" 2>/dev/null
+        echo ""
+        echo "All plugin subdirectories:"
+        find "${BUILDKITE_PLUGINS_PATH}" -maxdepth 1 -type d 2>/dev/null
+        echo ""
+        echo "Checking if agent name appears in paths..."
+        if find "${BUILDKITE_PLUGINS_PATH}" -path "*${BUILDKITE_AGENT_NAME}*" 2>/dev/null | grep -q .; then
+          echo "❌ FAILED: Agent name found in plugin path!"
+          find "${BUILDKITE_PLUGINS_PATH}" -path "*${BUILDKITE_AGENT_NAME}*" 2>/dev/null
+        else
+          echo "✅ SUCCESS: No agent name in plugin paths - sharing is working!"
+        fi
+      else
+        echo "Plugin directory not found"
+      fi
       echo ""
-      echo "Plugin subdirectories:"
-      find "${BUILDKITE_PLUGINS_PATH}" -maxdepth 2 -type d 2>/dev/null | head -10
-      echo ""
-      echo "=== Test Complete ===" 
-      echo "Plugin sharing feature from Ola-Plugin-Cache branch is working correctly!"
+      echo "=== Testing Multiple Plugins (Binary Downloads) ===" 
+      echo "This step uses shellcheck plugin which downloads binaries."
+      echo "With plugin sharing, the binary should only be downloaded once"
+      echo "and reused across builds."
     agents:
       queue: "kubernetes"
     plugins:
-      - docker-compose#v5.4.0:
-          config: docker-compose.test.yml
-          run: test
+      - shellcheck#v1.3.0:
+          files: "*.sh"
+          
+  - label: ":mag: Second Build - Verify Plugin Reuse"
+    command: |
+      echo "=== SECOND BUILD - TESTING PLUGIN REUSE ===" 
+      echo ""
+      echo "If plugin sharing works correctly:"
+      echo "1. The shellcheck plugin directory should already exist"
+      echo "2. The binary should NOT be re-downloaded"
+      echo "3. Multiple concurrent builds should use the same plugin directory"
+      echo ""
+      echo "Plugin path: ${BUILDKITE_PLUGINS_PATH}"
+      echo ""
+      if [ -d "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0" ]; then
+        echo "✅ Plugin directory already exists from previous step!"
+        ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/"
+      else
+        echo "⚠️  Plugin directory not found - may be first run"
+      fi
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - shellcheck#v1.3.0:
+          files: "*.sh"
