@@ -6,7 +6,7 @@ image:
 agent:
   externalSecretName: agent-stack-k8s-secrets
   externalSecretTokenKey: BUILDKITE_AGENT_TOKEN
-  tags: queue=k8s-plugin-test
+  tags: queue=kubernetes
   token: ""
 
 extraEnv:

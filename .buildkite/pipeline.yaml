@@ -1,38 +1,12 @@
 steps:
-  - label: ":white_check_mark: K8s Plugin Sharing Verification"
+  - label: "Plugin paths test"
     command: |
-      echo "=== PLUGIN SHARING VERIFICATION ON KUBERNETES ===" 
-      echo ""
-      echo "✅ Plugin path verification:"
-      echo "BUILDKITE_PLUGINS_PATH: ${BUILDKITE_PLUGINS_PATH}"
-      echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME}"
-      echo "Agent name: ${BUILDKITE_AGENT_NAME}"
-      echo "Agent ID: ${BUILDKITE_AGENT_ID}"
-      echo ""
-      echo "=== Plugin Directory Structure ===" 
-      if [ -d "${BUILDKITE_PLUGINS_PATH}" ]; then
-        echo "Plugin directory contents:"
-        ls -la "${BUILDKITE_PLUGINS_PATH}/" 2>/dev/null || echo "Empty"
-        echo ""
-        echo "Checking if agent name appears in paths..."
-        if find "${BUILDKITE_PLUGINS_PATH}" -path "*${BUILDKITE_AGENT_NAME}*" 2>/dev/null | grep -q .; then
-          echo "❌ FAILED: Agent name found in plugin path!"
-          find "${BUILDKITE_PLUGINS_PATH}" -path "*${BUILDKITE_AGENT_NAME}*" 2>/dev/null
-        else
-          echo "✅ SUCCESS: No agent name in plugin paths - sharing is working!"
-        fi
-      else
-        echo "Plugin directory not found"
-      fi
-      echo ""
-      echo "=== Agent Information ===" 
-      echo "Buildkite agent version:"
-      buildkite-agent --version
-      echo ""
-      echo "Environment:"
-      env | grep BUILDKITE | grep -i plugin | sort
+      ls -la "${BUILDKITE_PLUGINS_PATH}/"
+      find "${BUILDKITE_PLUGINS_PATH}" -maxdepth 1 -type d
     agents:
-      queue: "k8s-plugin-test"
+      queue: "kubernetes"
     plugins:
       - shellcheck#v1.3.0:
           files: "**/*.sh"
+      - artifacts#v1.9.4:
+          download: "*.log"
