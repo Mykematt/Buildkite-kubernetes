@@ -1,0 +1,75 @@
+steps:
+  - label: ":one: First Job - Download Binaries"
+    key: first-job
+    command: |
+      echo "=== First job - should download binaries ==="
+      echo "Plugin directory: $(pwd)"
+      echo "Plugins path: ${BUILDKITE_PLUGINS_PATH:-not set}"
+      echo "Binary cache location test:"
+      find /workspace -name "*docker*" -type f 2>/dev/null | head -5 || echo "No docker binaries found yet"
+      echo "Current working directory: $(pwd)"
+      echo "Job ID: ${BUILDKITE_JOB_ID}"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - monorepo-diff#v1.5.0:
+          checkout: true
+          watch:
+            - path: "packages/*"
+      - docker-compose#v5.12.1:
+          build: .
+          config: docker-compose.yml
+      - cache#v1.8.1:
+          path: "cache"
+          restore: true
+          save: true
+
+  - label: ":two: Second Job - Should Reuse Binaries"
+    key: second-job
+    command: |
+      echo "=== Second job - should reuse binaries ==="
+      echo "Plugin directory: $(pwd)"
+      echo "Plugins path: ${BUILDKITE_PLUGINS_PATH:-not set}"
+      echo "Binary cache location test:"
+      find /workspace -name "*docker*" -type f 2>/dev/null | head -5 || echo "No docker binaries found"
+      echo "Current working directory: $(pwd)"
+      echo "Job ID: ${BUILDKITE_JOB_ID}"
+      echo "Checking for existing binaries in shared location..."
+      ls -la /workspace/plugins/ 2>/dev/null | head -5 || echo "No /workspace/plugins directory"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - monorepo-diff#v1.5.0:
+          checkout: true
+          watch:
+            - path: "packages/*"
+      - docker-compose#v5.12.1:
+          build: .
+          config: docker-compose.yml
+      - cache#v1.8.1:
+          path: "cache"
+          restore: true
+          save: true
+
+  - label: ":three: Third Job - Verify Consistent Paths"
+    key: third-job
+    command: |
+      echo "=== Third job - verify consistent paths ==="
+      echo "Plugin directory: $(pwd)"
+      echo "Plugins path: ${BUILDKITE_PLUGINS_PATH:-not set}"
+      echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME:-not set}"
+      echo "Binary cache verification:"
+      find /workspace -name "*docker*" -type f 2>/dev/null | wc -l
+      echo "Plugin directories:"
+      ls -la /workspace/plugins/ 2>/dev/null | head -10
+      echo "Job ID: ${BUILDKITE_JOB_ID}"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - monorepo-diff#v1.5.0:
+          checkout: true
+          watch:
+            - path: "packages/*"
+      - docker-compose#v5.12.1:
+          build: .
+          config: docker-compose.yml
