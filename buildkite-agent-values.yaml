@@ -1,0 +1,50 @@
+image:
+  repository: 097340723131.dkr.ecr.us-east-1.amazonaws.com/ola-buildkite-agent
+  tag: plugin-cache-amd64
+  pullPolicy: Always
+
+agent:
+  externalSecretName: agent-stack-k8s-secrets
+  externalSecretTokenKey: BUILDKITE_AGENT_TOKEN
+  tags: queue=k8s-plugin-test
+  token: ""
+
+extraEnv:
+  - name: BUILDKITE_AGENT_NAME
+    value: k8s-test-agent
+  - name: BUILDKITE_AGENT_DISCONNECT_AFTER_JOB
+    value: "true"
+  - name: BUILDKITE_AGENT_DISCONNECT_AFTER_IDLE_TIMEOUT
+    value: "300"
+  - name: BUILDKITE_KUBERNETES_EXEC
+    value: "false"
+  - name: BUILDKITE_BUILD_PATH
+    value: /workspace/builds
+  - name: BUILDKITE_PLUGINS_PATH
+    value: /workspace/plugins
+  - name: BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME
+    value: "false"
+
+enableHostDocker: true
+
+livenessProbe:
+  exec:
+    command:
+      - echo
+      - health check
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+replicaCount: 1
+
+rbac:
+  create: false
+
+serviceAccount:
+  annotations: {}

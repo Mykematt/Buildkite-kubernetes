@@ -1,20 +1,18 @@
 steps:
-  - label: ":white_check_mark: Plugin Sharing Verification"
+  - label: ":white_check_mark: K8s Plugin Sharing Verification"
     command: |
-      echo "=== PLUGIN SHARING VERIFICATION ===" 
+      echo "=== PLUGIN SHARING VERIFICATION ON KUBERNETES ===" 
       echo ""
       echo "✅ Plugin path verification:"
       echo "BUILDKITE_PLUGINS_PATH: ${BUILDKITE_PLUGINS_PATH}"
       echo "BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME: ${BUILDKITE_PLUGINS_PATH_INCLUDES_AGENT_NAME}"
       echo "Agent name: ${BUILDKITE_AGENT_NAME}"
+      echo "Agent ID: ${BUILDKITE_AGENT_ID}"
       echo ""
       echo "=== Plugin Directory Structure ===" 
       if [ -d "${BUILDKITE_PLUGINS_PATH}" ]; then
         echo "Plugin directory contents:"
-        ls -la "${BUILDKITE_PLUGINS_PATH}/" 2>/dev/null
-        echo ""
-        echo "All plugin subdirectories:"
-        find "${BUILDKITE_PLUGINS_PATH}" -maxdepth 1 -type d 2>/dev/null
+        ls -la "${BUILDKITE_PLUGINS_PATH}/" 2>/dev/null || echo "Empty"
         echo ""
         echo "Checking if agent name appears in paths..."
         if find "${BUILDKITE_PLUGINS_PATH}" -path "*${BUILDKITE_AGENT_NAME}*" 2>/dev/null | grep -q .; then
@@ -27,35 +25,14 @@ steps:
         echo "Plugin directory not found"
       fi
       echo ""
-      echo "=== Testing Multiple Plugins (Binary Downloads) ===" 
-      echo "This step uses shellcheck plugin which downloads binaries."
-      echo "With plugin sharing, the binary should only be downloaded once"
-      echo "and reused across builds."
+      echo "=== Agent Information ===" 
+      echo "Buildkite agent version:"
+      buildkite-agent --version
+      echo ""
+      echo "Environment:"
+      env | grep BUILDKITE | grep -i plugin | sort
     agents:
-      queue: "kubernetes"
+      queue: "k8s-plugin-test"
     plugins:
       - shellcheck#v1.3.0:
-          files: "*.sh"
-          
-  - label: ":mag: Second Build - Verify Plugin Reuse"
-    command: |
-      echo "=== SECOND BUILD - TESTING PLUGIN REUSE ===" 
-      echo ""
-      echo "If plugin sharing works correctly:"
-      echo "1. The shellcheck plugin directory should already exist"
-      echo "2. The binary should NOT be re-downloaded"
-      echo "3. Multiple concurrent builds should use the same plugin directory"
-      echo ""
-      echo "Plugin path: ${BUILDKITE_PLUGINS_PATH}"
-      echo ""
-      if [ -d "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0" ]; then
-        echo "✅ Plugin directory already exists from previous step!"
-        ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-shellcheck-buildkite-plugin-v1-3-0/"
-      else
-        echo "⚠️  Plugin directory not found - may be first run"
-      fi
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - shellcheck#v1.3.0:
-          files: "*.sh"
+          files: "**/*.sh"
