@@ -37,3 +37,4 @@ The project uses a Buildkite pipeline to automate the deployment process. The pi
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 # Test plugin sharing with custom agent
+# Testing plugin cache feature
