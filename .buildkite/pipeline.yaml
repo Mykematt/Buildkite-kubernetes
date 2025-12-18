@@ -1,61 +1,56 @@
 steps:
-  - label: ":one: First job with monorepo-diff"
+  - label: "Test 1: Cache plugin first use"
     command: |
-      echo "=== Job 1: Check plugin directory before running ==="
-      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/" || echo "Plugin dir empty"
-      echo ""
-      echo "=== After plugin runs, check for binary ==="
-      sleep 2
-      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/" || echo "Still empty"
+      echo "Step 1: First time using cache plugin"
+      ls -la /workspace/plugins/ || true
+      echo "test-content-$(date +%s)" > test-file.txt
+      cat test-file.txt
     agents:
       queue: "kubernetes"
     plugins:
-      - monorepo-diff#v1.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "nonexistent/"
-              config:
-                command: "echo 'would trigger'"
+      - cache#v1.8.1:
+          backend: fs
+          path: test-cache
+          manifest: test-file.txt
+          restore: file
+          save: file
+    env:
+      BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/workspace/cache-data"
 
-  - label: ":two: Second job with monorepo-diff"  
+  - label: "Test 2: Cache plugin second use"
     command: |
-      echo "=== Job 2: Check if binary was reused ==="
-      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/"
-      echo ""
-      echo "=== Check for binary file specifically ==="
-      if [ -f "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin" ]; then
-        echo "✅ Binary exists! Checking age..."
-        stat "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin"
-      else
-        echo "❌ Binary not found"
-      fi
+      echo "Step 2: Second time using cache plugin (should reuse plugin repo)"
+      ls -la /workspace/plugins/
+      echo "Looking for cache plugin checkout:"
+      find /workspace/plugins/ -name "*cache*" -type d || true
+      echo "test-content-$(date +%s)" > test-file.txt
+      cat test-file.txt
     agents:
       queue: "kubernetes"
     plugins:
-      - monorepo-diff#v1.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "nonexistent/"
-              config:
-                command: "echo 'would trigger'"
+      - cache#v1.8.1:
+          backend: fs
+          path: test-cache
+          manifest: test-file.txt
+          restore: file
+          save: file
+    env:
+      BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/workspace/cache-data"
 
-  - label: ":three: Third job with monorepo-diff"
+  - label: "Test 3: Cache plugin third use"
     command: |
-      echo "=== Job 3: Final check for binary reuse ==="
-      ls -lah "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/"
-      echo ""
-      if [ -f "${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin" ]; then
-        echo "✅ Binary still exists!"
-        echo "Binary size: $(ls -lh ${BUILDKITE_PLUGINS_PATH}/github-com-buildkite-plugins-monorepo-diff-buildkite-plugin-v1-6-0/monorepo-diff-buildkite-plugin | awk '{print $5}')"
-      else
-        echo "❌ Binary not found"
-      fi
+      echo "Step 3: Third time using cache plugin (should also reuse plugin repo)"
+      ls -la /workspace/plugins/
+      echo "Checking if plugin was cloned or reused:"
+      find /workspace/plugins/ -name "*cache*" -type d -exec ls -la {} \; || true
     agents:
       queue: "kubernetes"
     plugins:
-      - monorepo-diff#v1.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "nonexistent/"
-              config:
-                command: "echo 'would trigger'"
+      - cache#v1.8.1:
+          backend: fs
+          path: test-cache
+          manifest: test-file.txt
+          restore: file
+          save: file
+    env:
+      BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/workspace/cache-data"
