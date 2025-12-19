@@ -1,56 +1,36 @@
 steps:
-  - label: "Test 1: Cache plugin first use"
+  - label: ":rocket: Job 1 - First plugin use"
     command: |
-      echo "Step 1: First time using cache plugin"
-      ls -la /workspace/plugins/ || true
-      echo "test-content-$(date +%s)" > test-file.txt
-      cat test-file.txt
+      echo "Job 1 starting"
+      echo "Plugin location:"
+      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
+      echo "Success!"
     agents:
       queue: "kubernetes"
     plugins:
-      - cache#v1.8.1:
-          backend: fs
-          path: test-cache
-          manifest: test-file.txt
-          restore: file
-          save: file
-    env:
-      BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/workspace/cache-data"
+      - docker#v5.11.0:
+          image: "alpine:latest"
 
-  - label: "Test 2: Cache plugin second use"
+  - label: ":zap: Job 2 - Should reuse plugin"
     command: |
-      echo "Step 2: Second time using cache plugin (should reuse plugin repo)"
+      echo "Job 2 starting"
+      echo "Plugin should be reused:"
       ls -la /workspace/plugins/
-      echo "Looking for cache plugin checkout:"
-      find /workspace/plugins/ -name "*cache*" -type d || true
-      echo "test-content-$(date +%s)" > test-file.txt
-      cat test-file.txt
+      echo "Success!"
     agents:
       queue: "kubernetes"
     plugins:
-      - cache#v1.8.1:
-          backend: fs
-          path: test-cache
-          manifest: test-file.txt
-          restore: file
-          save: file
-    env:
-      BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/workspace/cache-data"
+      - docker#v5.11.0:
+          image: "alpine:latest"
 
-  - label: "Test 3: Cache plugin third use"
+  - label: ":fire: Job 3 - Should also reuse plugin"
     command: |
-      echo "Step 3: Third time using cache plugin (should also reuse plugin repo)"
-      ls -la /workspace/plugins/
-      echo "Checking if plugin was cloned or reused:"
-      find /workspace/plugins/ -name "*cache*" -type d -exec ls -la {} \; || true
+      echo "Job 3 starting"
+      echo "Checking plugin reuse:"
+      find /workspace/plugins/ -name "*docker*" -type d | head -5
+      echo "Success!"
     agents:
       queue: "kubernetes"
     plugins:
-      - cache#v1.8.1:
-          backend: fs
-          path: test-cache
-          manifest: test-file.txt
-          restore: file
-          save: file
-    env:
-      BUILDKITE_PLUGIN_FS_CACHE_FOLDER: "/workspace/cache-data"
+      - docker#v5.11.0:
+          image: "alpine:latest"
