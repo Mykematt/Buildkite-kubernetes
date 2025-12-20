@@ -31,6 +31,7 @@ steps:
   - wait 
   
   - label: ":fire: Job 3 - Should also reuse plugin"
+    key: "third no download"
     depends_on: "second no download"
     command: |
       echo "Job 3 starting"
