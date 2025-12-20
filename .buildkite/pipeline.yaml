@@ -1,6 +1,6 @@
 steps:
   - label: ":rocket: Job 1 - First plugin use"
-    key: "first download"
+    key: "first-download"
     command: |
       echo "Job 1 starting"
       echo "Plugin location:"
@@ -15,8 +15,8 @@ steps:
   - wait 
   
   - label: ":zap: Job 2 - Should reuse plugin"
-    key: "second no download"
-    depends_on: "first download"
+    key: "second-no-download"
+    depends_on: "first-download"
     command: |
       echo "Job 2 starting"
       echo "Plugin should be reused:"
@@ -31,8 +31,8 @@ steps:
   - wait 
   
   - label: ":fire: Job 3 - Should also reuse plugin"
-    key: "third no download"
-    depends_on: "second no download"
+    key: "third-no-download"
+    depends_on: "second-no-download"
     command: |
       echo "Job 3 starting"
       echo "Checking plugin reuse:"
