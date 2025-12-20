@@ -12,6 +12,8 @@ steps:
       - docker#v5.11.0:
           image: "alpine:latest"
 
+  - wait 
+  
   - label: ":zap: Job 2 - Should reuse plugin"
     key: "Second no download"
     depends_on: "First download"
@@ -26,6 +28,8 @@ steps:
       - docker#v5.11.0:
           image: "alpine:latest"
 
+  - wait 
+  
   - label: ":fire: Job 3 - Should also reuse plugin"
     depends_on: "Second no download"
     command: |
