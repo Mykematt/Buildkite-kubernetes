@@ -1,45 +1,54 @@
 steps:
-  - label: ":rocket: Job 1 - First plugin use"
-    key: "first-download"
+  - label: ":rocket: Job 1 - Monorepo diff plugin"
     command: |
       echo "Job 1 starting"
       echo "Plugin location:"
       ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
+      echo "Checking monorepo plugin:"
+      find /workspace/plugins/ -name "*monorepo*" -type d 2>&1 || echo "Plugin not found"
       echo "Success!"
     agents:
       queue: "kubernetes"
     plugins:
-      - docker#v5.11.0:
-          image: "alpine:latest"
+      - monorepo-diff#v2.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "."
+              config:
+                command: "echo 'monorepo plugin executed'"
 
-  - wait 
-  
-  - label: ":zap: Job 2 - Should reuse plugin"
-    key: "second-no-download"
-    depends_on: "first-download"
+  - label: ":rocket: Job 2 - Monorepo diff plugin"
     command: |
       echo "Job 2 starting"
-      echo "Plugin should be reused:"
-      ls -la /workspace/plugins/
+      echo "Plugin location:"
+      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
+      echo "Checking monorepo plugin:"
+      find /workspace/plugins/ -name "*monorepo*" -type d 2>&1 || echo "Plugin not found"
       echo "Success!"
     agents:
       queue: "kubernetes"
     plugins:
-      - docker#v5.11.0:
-          image: "alpine:latest"
+      - monorepo-diff#v2.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "."
+              config:
+                command: "echo 'monorepo plugin executed'"
 
-  - wait 
-  
-  - label: ":fire: Job 3 - Should also reuse plugin"
-    key: "third-no-download"
-    depends_on: "second-no-download"
+  - label: ":rocket: Job 3 - Monorepo diff plugin"
     command: |
       echo "Job 3 starting"
-      echo "Checking plugin reuse:"
-      find /workspace/plugins/ -name "*docker*" -type d | head -5
+      echo "Plugin location:"
+      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
+      echo "Checking monorepo plugin:"
+      find /workspace/plugins/ -name "*monorepo*" -type d 2>&1 || echo "Plugin not found"
       echo "Success!"
     agents:
       queue: "kubernetes"
     plugins:
-      - docker#v5.11.0:
-          image: "alpine:latest"
+      - monorepo-diff#v2.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "."
+              config:
+                command: "echo 'monorepo plugin executed'"
