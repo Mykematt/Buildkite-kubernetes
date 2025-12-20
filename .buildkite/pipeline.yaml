@@ -13,7 +13,7 @@ steps:
           image: "alpine:latest"
 
   - label: ":zap: Job 2 - Should reuse plugin"
-    key: "Second no-download"
+    key: "Second no download"
     depends_on: "First download"
     command: |
       echo "Job 2 starting"
@@ -27,7 +27,7 @@ steps:
           image: "alpine:latest"
 
   - label: ":fire: Job 3 - Should also reuse plugin"
-    depends_on: "Second no-download"
+    depends_on: "Second no download"
     command: |
       echo "Job 3 starting"
       echo "Checking plugin reuse:"
