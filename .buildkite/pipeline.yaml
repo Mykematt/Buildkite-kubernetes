@@ -1,54 +1,45 @@
 steps:
-  - label: ":rocket: Job 1 - Monorepo diff plugin"
+  - label: ":writing_hand: Write to persistent storage"
+    key: "write-test"
     command: |
-      echo "Job 1 starting"
-      echo "Plugin location:"
-      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
-      echo "Checking monorepo plugin:"
-      find /workspace/plugins/ -name "*monorepo*" -type d 2>&1 || echo "Plugin not found"
-      echo "Success!"
+      echo "Creating test data in persistent storage..."
+      mkdir -p /workspace/plugins/test-data
+      echo "Test data from job 1 - timestamp: \$(date +%s)" > /workspace/plugins/test-data/persistence-test.txt
+      echo "Agent name: \$BUILDKITE_AGENT_NAME" >> /workspace/plugins/test-data/persistence-test.txt
+      echo "Job ID: \$BUILDKITE_JOB_ID" >> /workspace/plugins/test-data/persistence-test.txt
+      cat /workspace/plugins/test-data/persistence-test.txt
+      ls -la /workspace/plugins/test-data/
     agents:
       queue: "kubernetes"
-    plugins:
-      - monorepo-diff#v2.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "."
-              config:
-                command: "echo 'monorepo plugin executed'"
 
-  - label: ":rocket: Job 2 - Monorepo diff plugin"
-    command: |
-      echo "Job 2 starting"
-      echo "Plugin location:"
-      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
-      echo "Checking monorepo plugin:"
-      find /workspace/plugins/ -name "*monorepo*" -type d 2>&1 || echo "Plugin not found"
-      echo "Success!"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - monorepo-diff#v2.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "."
-              config:
-                command: "echo 'monorepo plugin executed'"
+  - wait
 
-  - label: ":rocket: Job 3 - Monorepo diff plugin"
+  - label: ":mag: Read from persistent storage"
+    key: "read-test"
     command: |
-      echo "Job 3 starting"
-      echo "Plugin location:"
-      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
-      echo "Checking monorepo plugin:"
-      find /workspace/plugins/ -name "*monorepo*" -type d 2>&1 || echo "Plugin not found"
-      echo "Success!"
+      echo "Reading test data from persistent storage..."
+      echo "Current agent: \$BUILDKITE_AGENT_NAME"
+      echo "---"
+      if [ -f /workspace/plugins/test-data/persistence-test.txt ]; then
+        echo "SUCCESS: File found in persistent storage!"
+        cat /workspace/plugins/test-data/persistence-test.txt
+        echo "---"
+        echo "Listing all files in plugins directory:"
+        find /workspace/plugins -type f
+      else
+        echo "FAIL: File not found. Storage not persisting."
+        exit 1
+      fi
     agents:
       queue: "kubernetes"
-    plugins:
-      - monorepo-diff#v2.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "."
-              config:
-                command: "echo 'monorepo plugin executed'"
+
+  - wait
+
+  - label: ":broom: Cleanup test data"
+    key: "cleanup-test"
+    command: |
+      echo "Cleaning up test data..."
+      rm -rf /workspace/plugins/test-data
+      echo "Cleanup complete"
+    agents:
+      queue: "kubernetes"
