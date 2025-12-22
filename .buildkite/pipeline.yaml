@@ -5,15 +5,11 @@ steps:
       echo "Job 1 starting..."
       echo "Checking plugins directory:"
       ls -la /workspace/plugins/ || echo "No plugins dir yet"
-      echo "Looking for monorepo plugin:"
-      find /workspace/plugins/ -name "*monorepo*" -type d || echo "Not found yet"
+      echo "Looking for artifacts plugin:"
+      find /workspace/plugins/ -name "*artifacts*" -type d || echo "Not found yet"
     plugins:
-      - monorepo-diff#v2.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "."
-              config:
-                command: "echo 'Plugin executed'"
+      - artifacts#v1.9.4:
+          download: "*.txt"
     agents:
       queue: "kubernetes"
 
@@ -25,15 +21,11 @@ steps:
       echo "Job 2 starting..."
       echo "Checking plugins directory:"
       ls -la /workspace/plugins/ || echo "No plugins dir yet"
-      echo "Looking for monorepo plugin:"
-      find /workspace/plugins/ -name "*monorepo*" -type d || echo "Not found yet"
+      echo "Looking for artifacts plugin:"
+      find /workspace/plugins/ -name "*artifacts*" -type d || echo "Not found yet"
     plugins:
-      - monorepo-diff#v2.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "."
-              config:
-                command: "echo 'Plugin executed'"
+      - artifacts#v1.9.4:
+          download: "*.txt"
     agents:
       queue: "kubernetes"
 
@@ -45,14 +37,10 @@ steps:
       echo "Job 3 starting..."
       echo "Checking plugins directory:"
       ls -la /workspace/plugins/ || echo "No plugins dir yet"
-      echo "Looking for monorepo plugin:"
-      find /workspace/plugins/ -name "*monorepo*" -type d || echo "Not found yet"
+      echo "Looking for artifacts plugin:"
+      find /workspace/plugins/ -name "*artifacts*" -type d || echo "Not found yet"
     plugins:
-      - monorepo-diff#v2.6.0:
-          diff: "git diff --name-only HEAD~1"
-          watch:
-            - path: "."
-              config:
-                command: "echo 'Plugin executed'"
+      - artifacts#v1.9.4:
+          download: "*.txt"
     agents:
       queue: "kubernetes"
