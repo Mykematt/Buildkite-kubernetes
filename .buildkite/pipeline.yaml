@@ -1,46 +1,54 @@
 steps:
-  - label: ":one: Job 1 - First Download"
+  - label: ":one: Job 1 - Check What's Cached"
     key: "job1"
     command: |
-      echo "Job 1 starting..."
-      echo "Checking plugins directory:"
-      ls -la /workspace/plugins/ || echo "No plugins dir yet"
-      echo "Looking for artifacts plugin:"
-      find /workspace/plugins/ -name "*artifacts*" -type d || echo "Not found yet"
-    plugins:
-      - artifacts#v1.9.4:
-          download: "*.txt"
+      echo "Job 1 - Checking what's already in plugins directory from previous builds:"
+      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
+      echo ""
+      echo "Looking for any cached plugins:"
+      find /workspace/plugins/ -maxdepth 1 -type d 2>&1 | head -20
     agents:
       queue: "kubernetes"
 
   - wait
 
-  - label: ":two: Job 2 - Should Reuse Cache"
+  - label: ":two: Job 2 - Download Plugin (Parallel)"
     key: "job2"
     command: |
       echo "Job 2 starting..."
-      echo "Checking plugins directory:"
-      ls -la /workspace/plugins/ || echo "No plugins dir yet"
-      echo "Looking for artifacts plugin:"
-      find /workspace/plugins/ -name "*artifacts*" -type d || echo "Not found yet"
+      echo "Plugins after download:"
+      ls -la /workspace/plugins/ 2>&1
+      find /workspace/plugins/ -name "*shellcheck*" -type d 2>&1
     plugins:
-      - artifacts#v1.9.4:
-          download: "*.txt"
+      - shellcheck#v1.3.0:
+          files: "*.sh"
+    agents:
+      queue: "kubernetes"
+
+  - label: ":three: Job 3 - Download Plugin (Parallel)"
+    key: "job3"
+    command: |
+      echo "Job 3 starting..."
+      echo "Plugins after download:"
+      ls -la /workspace/plugins/ 2>&1
+      find /workspace/plugins/ -name "*shellcheck*" -type d 2>&1
+    plugins:
+      - shellcheck#v1.3.0:
+          files: "*.sh"
     agents:
       queue: "kubernetes"
 
   - wait
 
-  - label: ":three: Job 3 - Should Also Reuse Cache"
-    key: "job3"
+  - label: ":four: Job 4 - Should Reuse Cache (Sequential)"
+    key: "job4"
     command: |
-      echo "Job 3 starting..."
-      echo "Checking plugins directory:"
-      ls -la /workspace/plugins/ || echo "No plugins dir yet"
-      echo "Looking for artifacts plugin:"
-      find /workspace/plugins/ -name "*artifacts*" -type d || echo "Not found yet"
+      echo "Job 4 starting (should see 'already checked out')..."
+      echo "Plugins directory:"
+      ls -la /workspace/plugins/ 2>&1
+      find /workspace/plugins/ -name "*shellcheck*" -type d 2>&1
     plugins:
-      - artifacts#v1.9.4:
-          download: "*.txt"
+      - shellcheck#v1.3.0:
+          files: "*.sh"
     agents:
       queue: "kubernetes"
