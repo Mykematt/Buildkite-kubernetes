@@ -1,45 +1,63 @@
 steps:
-  - label: ":writing_hand: Write to persistent storage"
-    key: "write-test"
+  - label: ":rocket: Job 1 - Download & Lock Plugin"
+    key: "job1"
     command: |
-      echo "Creating test data in persistent storage..."
-      mkdir -p /workspace/plugins/test-data
-      echo "Test data from job 1 - timestamp: \$(date +%s)" > /workspace/plugins/test-data/persistence-test.txt
-      echo "Agent name: \$BUILDKITE_AGENT_NAME" >> /workspace/plugins/test-data/persistence-test.txt
-      echo "Job ID: \$BUILDKITE_JOB_ID" >> /workspace/plugins/test-data/persistence-test.txt
-      cat /workspace/plugins/test-data/persistence-test.txt
-      ls -la /workspace/plugins/test-data/
+      echo "Job 1 starting..."
+      echo "Checking for plugin downloads..."
+      ls -la /workspace/plugins/ || echo "No plugins dir yet"
+
+      echo "Sleeping for 5 seconds to simulate work..."
+      sleep 5
+
+      echo "After work, checking plugins:"
+      ls -la /workspace/plugins/
+
+      echo "Looking for lock files:"
+      find /workspace/plugins -name "*.clonelockf" -ls
+    plugins:
+      - docker#v5.11.0:
+          image: alpine:latest
     agents:
       queue: "kubernetes"
 
-  - wait
-
-  - label: ":mag: Read from persistent storage"
-    key: "read-test"
+  - label: ":rocket: Job 2 - Should Wait for Lock"
+    key: "job2"
     command: |
-      echo "Reading test data from persistent storage..."
-      echo "Current agent: \$BUILDKITE_AGENT_NAME"
-      echo "---"
-      if [ -f /workspace/plugins/test-data/persistence-test.txt ]; then
-        echo "SUCCESS: File found in persistent storage!"
-        cat /workspace/plugins/test-data/persistence-test.txt
-        echo "---"
-        echo "Listing all files in plugins directory:"
-        find /workspace/plugins -type f
-      else
-        echo "FAIL: File not found. Storage not persisting."
-        exit 1
-      fi
+      echo "Job 2 starting..."
+      echo "Checking for plugin downloads..."
+      ls -la /workspace/plugins/ || echo "No plugins dir yet"
+
+      echo "Sleeping for 5 seconds to simulate work..."
+      sleep 5
+
+      echo "After work, checking plugins:"
+      ls -la /workspace/plugins/
+
+      echo "Looking for lock files:"
+      find /workspace/plugins -name "*.clonelockf" -ls
+    plugins:
+      - docker#v5.11.0:
+          image: alpine:latest
     agents:
       queue: "kubernetes"
 
-  - wait
-
-  - label: ":broom: Cleanup test data"
-    key: "cleanup-test"
+  - label: ":rocket: Job 3 - Should Reuse Cached Plugin"
+    key: "job3"
     command: |
-      echo "Cleaning up test data..."
-      rm -rf /workspace/plugins/test-data
-      echo "Cleanup complete"
+      echo "Job 3 starting..."
+      echo "Checking for plugin downloads..."
+      ls -la /workspace/plugins/ || echo "No plugins dir yet"
+
+      echo "Sleeping for 5 seconds to simulate work..."
+      sleep 5
+
+      echo "After work, checking plugins:"
+      ls -la /workspace/plugins/
+
+      echo "Looking for lock files:"
+      find /workspace/plugins -name "*.clonelockf" -ls
+    plugins:
+      - docker#v5.11.0:
+          image: alpine:latest
     agents:
       queue: "kubernetes"
