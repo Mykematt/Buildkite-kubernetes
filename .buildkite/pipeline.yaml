@@ -1,63 +1,58 @@
 steps:
-  - label: ":rocket: Job 1 - Download & Lock Plugin"
+  - label: ":one: Job 1 - First Download"
     key: "job1"
     command: |
       echo "Job 1 starting..."
-      echo "Checking for plugin downloads..."
+      echo "Checking plugins directory:"
       ls -la /workspace/plugins/ || echo "No plugins dir yet"
-
-      echo "Sleeping for 5 seconds to simulate work..."
-      sleep 5
-
-      echo "After work, checking plugins:"
-      ls -la /workspace/plugins/
-
-      echo "Looking for lock files:"
-      find /workspace/plugins -name "*.clonelockf" -ls
+      echo "Looking for monorepo plugin:"
+      find /workspace/plugins/ -name "*monorepo*" -type d || echo "Not found yet"
     plugins:
-      - docker#v5.11.0:
-          image: alpine:latest
+      - monorepo-diff#v2.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "."
+              config:
+                command: "echo 'Plugin executed'"
     agents:
       queue: "kubernetes"
 
-  - label: ":rocket: Job 2 - Should Wait for Lock"
+  - wait
+
+  - label: ":two: Job 2 - Should Reuse Cache"
     key: "job2"
     command: |
       echo "Job 2 starting..."
-      echo "Checking for plugin downloads..."
+      echo "Checking plugins directory:"
       ls -la /workspace/plugins/ || echo "No plugins dir yet"
-
-      echo "Sleeping for 5 seconds to simulate work..."
-      sleep 5
-
-      echo "After work, checking plugins:"
-      ls -la /workspace/plugins/
-
-      echo "Looking for lock files:"
-      find /workspace/plugins -name "*.clonelockf" -ls
+      echo "Looking for monorepo plugin:"
+      find /workspace/plugins/ -name "*monorepo*" -type d || echo "Not found yet"
     plugins:
-      - docker#v5.11.0:
-          image: alpine:latest
+      - monorepo-diff#v2.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "."
+              config:
+                command: "echo 'Plugin executed'"
     agents:
       queue: "kubernetes"
 
-  - label: ":rocket: Job 3 - Should Reuse Cached Plugin"
+  - wait
+
+  - label: ":three: Job 3 - Should Also Reuse Cache"
     key: "job3"
     command: |
       echo "Job 3 starting..."
-      echo "Checking for plugin downloads..."
+      echo "Checking plugins directory:"
       ls -la /workspace/plugins/ || echo "No plugins dir yet"
-
-      echo "Sleeping for 5 seconds to simulate work..."
-      sleep 5
-
-      echo "After work, checking plugins:"
-      ls -la /workspace/plugins/
-
-      echo "Looking for lock files:"
-      find /workspace/plugins -name "*.clonelockf" -ls
+      echo "Looking for monorepo plugin:"
+      find /workspace/plugins/ -name "*monorepo*" -type d || echo "Not found yet"
     plugins:
-      - docker#v5.11.0:
-          image: alpine:latest
+      - monorepo-diff#v2.6.0:
+          diff: "git diff --name-only HEAD~1"
+          watch:
+            - path: "."
+              config:
+                command: "echo 'Plugin executed'"
     agents:
       queue: "kubernetes"
