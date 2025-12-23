@@ -18,10 +18,10 @@ steps:
       echo "Job 2 starting..."
       echo "Plugins after download:"
       ls -la /workspace/plugins/ 2>&1
-      find /workspace/plugins/ -name "*shellcheck*" -type d 2>&1
+      find /workspace/plugins/ -name "*artifacts*" -type d 2>&1
     plugins:
-      - shellcheck#v1.3.0:
-          files: "*.sh"
+      - artifacts#v1.9.4:
+          download: "test-script.sh"
     agents:
       queue: "kubernetes"
 
@@ -31,10 +31,10 @@ steps:
       echo "Job 3 starting..."
       echo "Plugins after download:"
       ls -la /workspace/plugins/ 2>&1
-      find /workspace/plugins/ -name "*shellcheck*" -type d 2>&1
+      find /workspace/plugins/ -name "*artifacts*" -type d 2>&1
     plugins:
-      - shellcheck#v1.3.0:
-          files: "*.sh"
+      - artifacts#v1.9.4:
+          download: "test-script.sh"
     agents:
       queue: "kubernetes"
 
@@ -46,9 +46,9 @@ steps:
       echo "Job 4 starting (should see 'already checked out')..."
       echo "Plugins directory:"
       ls -la /workspace/plugins/ 2>&1
-      find /workspace/plugins/ -name "*shellcheck*" -type d 2>&1
+      find /workspace/plugins/ -name "*artifacts*" -type d 2>&1
     plugins:
-      - shellcheck#v1.3.0:
-          files: "*.sh"
+      - artifacts#v1.9.4:
+          download: "test-script.sh"
     agents:
       queue: "kubernetes"
