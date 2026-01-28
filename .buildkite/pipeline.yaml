@@ -1,74 +1,53 @@
 steps:
-  - label: ":package: Upload Artifact"
-    key: "upload"
+  - label: ":test_tube: Test 1 - Default (no custom command)"
     command: |
-      echo "Uploading test-script.sh as an artifact..."
-      ls -la test-script.sh
-    artifact_paths: "test-script.sh"
+      echo "=== Test 1: Default behavior ==="
+      echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
+      echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
+      env | grep -i buildkite | sort
     agents:
       queue: "kubernetes"
 
-  - wait
-
-  - label: ":one: Job 1 - Check What's Cached"
-    key: "job1"
-    command: |
-      echo "Job 1 - Checking what's already in plugins directory from previous builds:"
-      ls -la /workspace/plugins/ 2>&1 || echo "No plugins dir yet"
-      echo ""
-      echo "Looking for any cached plugins:"
-      find /workspace/plugins/ -maxdepth 1 -type d 2>&1 | head -20
+  - label: ":test_tube: Test 2 - Custom podSpec command"
     agents:
       queue: "kubernetes"
-
-  - wait
-
-  - label: ":two: Job 2 - Download Plugin (Parallel)"
-    key: "job2"
-    command: |
-      echo "Job 2 starting..."
-      echo "Downloaded artifact:"
-      ls -la test-script.sh 2>&1
-      echo ""
-      echo "Plugins after download:"
-      ls -la /workspace/plugins/ 2>&1
-      find /workspace/plugins/ -name "*artifacts*" -type d 2>&1
     plugins:
-      - artifacts#v1.9.4:
-          download: "test-script.sh"
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest
+                command:
+                  - echo "Custom entrypoint executed"
+                  - echo "BUILDKITE_COMMAND is: $BUILDKITE_COMMAND"
+
+  - label: ":test_tube: Test 3 - Custom command with vector interposer"
     agents:
       queue: "kubernetes"
-
-  - label: ":three: Job 3 - Download Plugin (Parallel)"
-    key: "job3"
-    command: |
-      echo "Job 3 starting..."
-      echo "Downloaded artifact:"
-      ls -la test-script.sh 2>&1
-      echo ""
-      echo "Plugins after download:"
-      ls -la /workspace/plugins/ 2>&1
-      find /workspace/plugins/ -name "*artifacts*" -type d 2>&1
     plugins:
-      - artifacts#v1.9.4:
-          download: "test-script.sh"
-    agents:
-      queue: "kubernetes"
+      - kubernetes:
+          commandParams:
+            interposer: vector
+          podSpec:
+            containers:
+              - image: alpine:latest
+                command: ["sh"]
+                args: ["-c", "echo 'Vector mode'; echo BUILDKITE_COMMAND=$BUILDKITE_COMMAND; env | grep BUILDKITE"]
 
-  - wait
-
-  - label: ":four: Job 4 - Should Reuse Cache (Sequential)"
-    key: "job4"
+  - label: ":test_tube: Test 4 - Wrapper script pattern"
     command: |
-      echo "Job 4 starting (should see 'already checked out')..."
-      echo "Downloaded artifact:"
-      ls -la test-script.sh 2>&1
-      echo ""
-      echo "Plugins directory:"
-      ls -la /workspace/plugins/ 2>&1
-      find /workspace/plugins/ -name "*artifacts*" -type d 2>&1
-    plugins:
-      - artifacts#v1.9.4:
-          download: "test-script.sh"
+      echo "This is the STEP command from pipeline"
+      echo "It should appear in BUILDKITE_COMMAND"
     agents:
       queue: "kubernetes"
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest
+                command:
+                  - |
+                    echo "=== WRAPPER START ==="
+                    echo "Inside custom entrypoint wrapper"
+                    echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
+                    echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
+                    echo "=== WRAPPER END ==="
