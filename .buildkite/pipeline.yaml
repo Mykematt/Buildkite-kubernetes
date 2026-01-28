@@ -1,42 +1,5 @@
 steps:
-  - label: ":test_tube: Test 1 - Default (no custom command)"
-    command: |
-      echo "=== Test 1: Default behavior ==="
-      echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
-      echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
-      env | grep -i buildkite | sort
-    agents:
-      queue: "kubernetes"
-
-  - label: ":test_tube: Test 2 - Custom podSpec command"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - kubernetes:
-          podSpec:
-            containers:
-              - image: alpine:latest
-                command:
-                  - echo "Custom entrypoint executed"
-                  - echo "BUILDKITE_COMMAND is: $BUILDKITE_COMMAND"
-
-  - label: ":test_tube: Test 3 - Custom command with vector interposer"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - kubernetes:
-          commandParams:
-            interposer: vector
-          podSpec:
-            containers:
-              - image: alpine:latest
-                command: ["sh"]
-                args: ["-c", "echo 'Vector mode'; echo BUILDKITE_COMMAND=$BUILDKITE_COMMAND; env | grep BUILDKITE"]
-
-  - label: ":test_tube: Test 4 - Wrapper script pattern"
-    command: |
-      echo "This is the STEP command from pipeline"
-      echo "It should appear in BUILDKITE_COMMAND"
+  - label: ":test_tube: Test Custom PodSpec Command"
     agents:
       queue: "kubernetes"
     plugins:
@@ -46,8 +9,9 @@ steps:
               - image: alpine:latest
                 command:
                   - |
-                    echo "=== WRAPPER START ==="
-                    echo "Inside custom entrypoint wrapper"
+                    echo "=== CUSTOM ENTRYPOINT SCRIPT ==="
                     echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
                     echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
-                    echo "=== WRAPPER END ==="
+                    echo "=== ENV VARS ==="
+                    env | grep -i buildkite | sort
+                    echo "=== END ==="
