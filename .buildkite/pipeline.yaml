@@ -1,24 +1,24 @@
 steps:
-  - label: ":test_tube: Test 1 - Wrapper executes BUILDKITE_COMMAND"
-    command: |
-      echo "This is the STEP COMMAND from pipeline.yaml"
-      echo "It should be executed by the wrapper script"
+  - label: ":test_tube: Test 1 - Simple wrapper with vector interposer"
     agents:
       queue: "kubernetes"
     plugins:
       - kubernetes:
+          commandParams:
+            interposer: vector
           podSpec:
             containers:
               - image: alpine:latest
-                command:
+                command: ["sh"]
+                args:
+                  - "-c"
                   - |
                     echo "=== WRAPPER SCRIPT START ==="
                     echo "Custom setup before step execution..."
                     echo ""
-                    echo "BUILDKITE_COMMAND contains:"
-                    echo "$BUILDKITE_COMMAND"
+                    echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
                     echo ""
-                    echo "Now executing BUILDKITE_COMMAND via eval..."
+                    echo "Now executing BUILDKITE_COMMAND..."
                     echo "---"
                     eval "$BUILDKITE_COMMAND"
                     exit_code=$?
@@ -28,27 +28,27 @@ steps:
                     echo "=== WRAPPER SCRIPT END ==="
                     exit $exit_code
 
-  - label: ":test_tube: Test 2 - Wrapper with BUILDKITE_SCRIPT_PATH"
+  - label: ":test_tube: Test 2 - Step command preserved separately"
     command: |
-      echo "Step command via BUILDKITE_SCRIPT_PATH"
+      echo "THIS IS THE ORIGINAL STEP COMMAND"
+      echo "From pipeline.yaml"
     agents:
       queue: "kubernetes"
     plugins:
       - kubernetes:
+          commandParams:
+            interposer: vector
           podSpec:
             containers:
               - image: alpine:latest
-                command:
+                command: ["sh"]
+                args:
+                  - "-c"
                   - |
-                    echo "=== SCRIPT PATH TEST ==="
-                    echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
+                    echo "=== CHECKING ENV VARS ==="
                     echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
+                    echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
                     echo ""
-                    if [ -n "$BUILDKITE_SCRIPT_PATH" ] && [ -f "$BUILDKITE_SCRIPT_PATH" ]; then
-                      echo "Executing script at BUILDKITE_SCRIPT_PATH..."
-                      sh "$BUILDKITE_SCRIPT_PATH"
-                    else
-                      echo "No script file, using BUILDKITE_COMMAND instead..."
-                      eval "$BUILDKITE_COMMAND"
-                    fi
+                    echo "NOTE: When podSpec command is set, it REPLACES the step command"
+                    echo "The step command from pipeline.yaml is NOT in BUILDKITE_COMMAND"
                     echo "=== END ==="
