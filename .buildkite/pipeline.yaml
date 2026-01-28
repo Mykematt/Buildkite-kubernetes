@@ -1,5 +1,8 @@
 steps:
-  - label: ":test_tube: Test Custom PodSpec Command"
+  - label: ":test_tube: Test 1 - Wrapper executes BUILDKITE_COMMAND"
+    command: |
+      echo "This is the STEP COMMAND from pipeline.yaml"
+      echo "It should be executed by the wrapper script"
     agents:
       queue: "kubernetes"
     plugins:
@@ -9,9 +12,43 @@ steps:
               - image: alpine:latest
                 command:
                   - |
-                    echo "=== CUSTOM ENTRYPOINT SCRIPT ==="
-                    echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
+                    echo "=== WRAPPER SCRIPT START ==="
+                    echo "Custom setup before step execution..."
+                    echo ""
+                    echo "BUILDKITE_COMMAND contains:"
+                    echo "$BUILDKITE_COMMAND"
+                    echo ""
+                    echo "Now executing BUILDKITE_COMMAND via eval..."
+                    echo "---"
+                    eval "$BUILDKITE_COMMAND"
+                    exit_code=$?
+                    echo "---"
+                    echo "Step finished with exit code: $exit_code"
+                    echo "Custom cleanup after step execution..."
+                    echo "=== WRAPPER SCRIPT END ==="
+                    exit $exit_code
+
+  - label: ":test_tube: Test 2 - Wrapper with BUILDKITE_SCRIPT_PATH"
+    command: |
+      echo "Step command via BUILDKITE_SCRIPT_PATH"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest
+                command:
+                  - |
+                    echo "=== SCRIPT PATH TEST ==="
                     echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
-                    echo "=== ENV VARS ==="
-                    env | grep -i buildkite | sort
+                    echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
+                    echo ""
+                    if [ -n "$BUILDKITE_SCRIPT_PATH" ] && [ -f "$BUILDKITE_SCRIPT_PATH" ]; then
+                      echo "Executing script at BUILDKITE_SCRIPT_PATH..."
+                      sh "$BUILDKITE_SCRIPT_PATH"
+                    else
+                      echo "No script file, using BUILDKITE_COMMAND instead..."
+                      eval "$BUILDKITE_COMMAND"
+                    fi
                     echo "=== END ==="
