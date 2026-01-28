@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "=== POST-COMMAND HOOK ==="
+echo "Custom cleanup after step execution..."
+echo "Step exit code was: $BUILDKITE_COMMAND_EXIT_STATUS"
+echo "=== END POST-COMMAND ==="

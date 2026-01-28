@@ -1,37 +1,24 @@
 steps:
-  - label: ":test_tube: Test 1 - Simple wrapper with vector interposer"
-    agents:
-      queue: "kubernetes"
-    plugins:
-      - kubernetes:
-          commandParams:
-            interposer: vector
-          podSpec:
-            containers:
-              - image: alpine:latest
-                command: ["sh"]
-                args:
-                  - "-c"
-                  - |
-                    echo "=== WRAPPER SCRIPT START ==="
-                    echo "Custom setup before step execution..."
-                    echo ""
-                    echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
-                    echo ""
-                    echo "Now executing BUILDKITE_COMMAND..."
-                    echo "---"
-                    eval "$BUILDKITE_COMMAND"
-                    exit_code=$?
-                    echo "---"
-                    echo "Step finished with exit code: $exit_code"
-                    echo "Custom cleanup after step execution..."
-                    echo "=== WRAPPER SCRIPT END ==="
-                    exit $exit_code
-
-  - label: ":test_tube: Test 2 - Step command preserved separately"
+  # CORRECT PATTERN 1: Use hooks for wrapping (recommended)
+  # The step command stays in BUILDKITE_COMMAND, hooks wrap execution
+  - label: ":white_check_mark: Pattern 1 - Hooks for wrapping"
     command: |
-      echo "THIS IS THE ORIGINAL STEP COMMAND"
-      echo "From pipeline.yaml"
+      echo "This is the actual step command"
+      echo "It runs BETWEEN pre-command and post-command hooks"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest
+                env:
+                  - name: BUILDKITE_HOOKS_PATH
+                    value: "/workspace/build/buildkite/.buildkite/hooks"
+
+  # CORRECT PATTERN 2: Custom entrypoint that does setup, then runs bootstrap
+  # Don't use BUILDKITE_COMMAND - just do your setup and exit
+  - label: ":white_check_mark: Pattern 2 - Setup-only entrypoint (no step command)"
     agents:
       queue: "kubernetes"
     plugins:
@@ -45,10 +32,38 @@ steps:
                 args:
                   - "-c"
                   - |
-                    echo "=== CHECKING ENV VARS ==="
-                    echo "BUILDKITE_COMMAND: $BUILDKITE_COMMAND"
-                    echo "BUILDKITE_SCRIPT_PATH: $BUILDKITE_SCRIPT_PATH"
+                    echo "=== CUSTOM ENTRYPOINT ==="
+                    echo "Doing custom setup work..."
+                    echo "Setting up environment variables..."
+                    export MY_CUSTOM_VAR="configured"
+                    echo "Setup complete!"
                     echo ""
-                    echo "NOTE: When podSpec command is set, it REPLACES the step command"
-                    echo "The step command from pipeline.yaml is NOT in BUILDKITE_COMMAND"
-                    echo "=== END ==="
+                    echo "NOTE: This IS the step - there's no separate command to wrap"
+                    echo "=== DONE ==="
+
+  # CORRECT PATTERN 3: Step command only (no podSpec command)
+  # BUILDKITE_COMMAND contains the step command, can be eval'd by hooks
+  - label: ":white_check_mark: Pattern 3 - Step command without podSpec override"
+    command: |
+      echo "This step command is in BUILDKITE_COMMAND"
+      echo "Hooks can wrap this execution"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest
+
+  # DEMONSTRATION: Show what BUILDKITE_COMMAND contains in each scenario
+  - label: ":mag: Demo - BUILDKITE_COMMAND with step command only"
+    command: |
+      echo "The step command from pipeline.yaml"
+      env | grep -E "^BUILDKITE_COMMAND|^BUILDKITE_SCRIPT"
+    agents:
+      queue: "kubernetes"
+    plugins:
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: alpine:latest

@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "=== PRE-COMMAND HOOK ==="
+echo "Custom setup before step execution..."
+echo "Setting environment variables, preparing workspace, etc."
+echo "=== END PRE-COMMAND ==="
