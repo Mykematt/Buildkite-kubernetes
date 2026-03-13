@@ -5,7 +5,7 @@ steps:
   - label: ":x: Step 1 - Show keychain issue"
     command: |
       echo "--- Installing bk CLI v3.32.2"
-      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/bk_3.32.2_linux_amd64.tar.gz" | tar xz -C /usr/local/bin bk
+      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/bk_3.32.2_linux_amd64.tar.gz" | tar xz --strip-components=1 -C /usr/local/bin
 
       echo "--- Attempting bk auth login (OAuth) in container"
       echo "This will fail - OAuth redirects to 127.0.0.1:<random-port> which doesn't route back to the container"
@@ -17,7 +17,7 @@ steps:
   - label: ":white_check_mark: Step 2 - Workaround: BUILDKITE_API_TOKEN env var"
     command: |
       echo "--- Installing bk CLI v3.32.2"
-      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/bk_3.32.2_linux_amd64.tar.gz" | tar xz -C /usr/local/bin bk
+      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/bk_3.32.2_linux_amd64.tar.gz" | tar xz --strip-components=1 -C /usr/local/bin
 
       echo "--- Using BUILDKITE_API_TOKEN env var (bypasses keychain entirely)"
       export BUILDKITE_API_TOKEN=$$(buildkite-agent secret get API_ACCESS_TOKEN)
@@ -28,7 +28,7 @@ steps:
   - label: ":white_check_mark: Step 3 - Workaround: Legacy config file"
     command: |
       echo "--- Installing bk CLI v3.32.2"
-      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/bk_3.32.2_linux_amd64.tar.gz" | tar xz -C /usr/local/bin bk
+      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/bk_3.32.2_linux_amd64.tar.gz" | tar xz --strip-components=1 -C /usr/local/bin
 
       echo "--- Writing token to config file (legacy fallback)"
       mkdir -p ~/.config/buildkite
