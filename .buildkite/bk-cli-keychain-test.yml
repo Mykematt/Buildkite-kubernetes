@@ -1,0 +1,45 @@
+agents:
+  queue: linux
+
+steps:
+  - label: ":x: Step 1 - Show keychain issue"
+    command: |
+      echo "--- Installing bk CLI v3.32.2"
+      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/cli_linux_amd64.tar.gz" | tar xz -C /usr/local/bin bk
+
+      echo "--- Attempting bk auth login (OAuth) in container"
+      echo "This will fail - OAuth redirects to 127.0.0.1:<random-port> which doesn't route back to the container"
+      bk auth login 2>&1 || echo "Expected failure: OAuth login not supported in containers"
+
+      echo "--- Attempting bk auth login --token (keychain storage)"
+      bk auth login --org "$$BUILDKITE_ORGANIZATION_SLUG" --token "dummy-token" 2>&1 || echo "Expected failure: system keychain is not available in this container"
+
+  - label: ":white_check_mark: Step 2 - Workaround: BUILDKITE_API_TOKEN env var"
+    command: |
+      echo "--- Installing bk CLI v3.32.2"
+      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/cli_linux_amd64.tar.gz" | tar xz -C /usr/local/bin bk
+
+      echo "--- Using BUILDKITE_API_TOKEN env var (bypasses keychain entirely)"
+      export BUILDKITE_API_TOKEN=$$(buildkite-agent secret get API_ACCESS_TOKEN)
+      bk whoami
+    secrets:
+      - API_ACCESS_TOKEN
+
+  - label: ":white_check_mark: Step 3 - Workaround: Legacy config file"
+    command: |
+      echo "--- Installing bk CLI v3.32.2"
+      curl -sL "https://github.com/buildkite/cli/releases/download/v3.32.2/cli_linux_amd64.tar.gz" | tar xz -C /usr/local/bin bk
+
+      echo "--- Writing token to config file (legacy fallback)"
+      mkdir -p ~/.config/buildkite
+      cat > ~/.config/buildkite/config.yaml <<EOF
+      selected_org: "$$BUILDKITE_ORGANIZATION_SLUG"
+      organizations:
+        $$BUILDKITE_ORGANIZATION_SLUG:
+          api_token: "$$(buildkite-agent secret get API_ACCESS_TOKEN)"
+      EOF
+
+      echo "--- Using bk CLI with config file (expect deprecation warning but still works)"
+      bk whoami
+    secrets:
+      - API_ACCESS_TOKEN
